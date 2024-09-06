@@ -533,7 +533,7 @@ while running:
             checking_outer_points.append((pts[1], pts[0]))
             checking_outer_points.append((pts[3], pts[2]))
             
-        this_dis = get_point_distance(sec_point_theta)
+        this_dis = curved_distance(sec_point_theta)
         
         speed__ = (this_dis - last_point_distance[i]) / delta_t
         
@@ -544,7 +544,7 @@ while running:
         row_data['P_' + str(i)+ '_y'] = p_y
         row_data['P_' + str(i)+ '_speed'] = speed_
         
-        if i < 15:
+        if i < 30:
             GAME_FONT.render_to(fake_screen, (10, 130 + 25 * (i)), f"P_{i:3}: {_distance:.5f} {sec_point_theta:.8f} {p_x:12.5f},{p_y:12.5f} {speed__:10.5f}" , (0, 0, 0))
 
         # speed_ = compute_v_next(speed_, b, board_length_head if i == 0 else board_length, sec_point_theta , _sec_point_theta)
@@ -583,7 +583,7 @@ while running:
                 break
             
     if HAS_INTERSECT:
-        paused = True
+        # paused = True
         print("Intersect", pt, inner_lines[i], time)
         GAME_FONT.render_to(fake_screen, (10, 110), f"Intersect at: {intersection_points}", (255, 0, 0))
         for pt in intersection_points:
