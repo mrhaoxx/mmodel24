@@ -28,7 +28,7 @@ center = (SCALE_WIDTH / 2, SCALE_HEIGHT / 2)
 
 # 等距螺线参数
 a = 0  # 起始半径
-b = 55. / (2 * math.pi)
+b = 45.03373 / (2 * math.pi)
 theta_max = 32 * math.pi  # 螺线角度的最大值
 
 board_outer_width = 027.5
@@ -37,7 +37,7 @@ board_width = 30.
 board_length_head = 341 - 55
 board_length = 220 - 55
 
-time = 200
+time = 215
 delta_t = 0.01
 
 nodenum = 223
@@ -349,7 +349,7 @@ while running:
     
     for i in range(nodenum):
         
-        if i > 50:
+        if sec_point_theta - theta1 > 3 * math.pi:
             break
         
         if i == 0:
@@ -391,8 +391,7 @@ while running:
         row_data['P_' + str(i)+ '_speed'] = speed_
         
         if i < 10:
-            GAME_FONT.render_to(fake_screen, (10, 100 + 25 * (i)), f"P_{i:3}: {_distance:.5f} {sec_point_theta:.8f} {p_x:12.5f},{p_y:12.5f} {speed_:10.5f}" , (0, 0, 0))
-        
+            GAME_FONT.render_to(fake_screen, (10, 130 + 25 * (i)), f"P_{i:3}: {_distance:.5f} {sec_point_theta:.8f} {p_x:12.5f},{p_y:12.5f} {speed_:10.5f}" , (0, 0, 0))
         
         last_point_distance[i] = this_dis
         sec_point = _sec_point
@@ -402,27 +401,42 @@ while running:
     row_data['time'] = time
     csv_writer.writerow(row_data)
     
+    intersection_points = []
+    HAS_INTERSECT = False
+    
     for pt in checking_outer_points:
         pygame.draw.lines(fake_screen, (0, 0, 255), False, pt, 2)
 
-        HAS_INTERSECT = False
         P = None
         for i in range(len(inner_lines)):
             w, P = is_intersecting_with_point(inner_lines[i][0], inner_lines[i][1], pt[0], pt[1])
             if w:
                 HAS_INTERSECT = True
+                intersection_points.append(P)
                 break
+        
             
-        if HAS_INTERSECT:
-            paused = True
-            print("Intersect", pt, inner_lines[i], time)
-            pygame.draw.circle(fake_screen, (255, 0, 0), P, 5)
+            
+    if HAS_INTERSECT:
+        paused = True
+        print("Intersect", pt, inner_lines[i], time)
+        GAME_FONT.render_to(fake_screen, (10, 110), f"Intersect at: {intersection_points}", (255, 0, 0))
+        for pt in intersection_points:
+            pygame.draw.circle(fake_screen, (255, 0, 0), pt, 5)
+    else:
+        GAME_FONT.render_to(fake_screen, (10, 110), f"Not Intersect", (0, 255, 0))
         
     GAME_FONT.render_to(fake_screen, (10, 10), "DIS: " + str(distance), (0, 0, 0))
     GAME_FONT.render_to(fake_screen, (10, 30), "FPS: " + str(clock.get_fps()), (0, 0, 0))
     GAME_FONT.render_to(fake_screen, (10, 50), "TIME: " + str(time), (0, 0, 0))
     
-    GAME_FONT.render_to(fake_screen, (10, 80), f"CENTER DIS: {get_distance(head_point, center)}", (255, 0, 0))
+    center_Dis = get_distance(head_point, center)
+    
+    GAME_FONT.render_to(fake_screen, (10, 80), f"CENTER DIS: {center_Dis}", (255, 0, 0) if center_Dis > r_tuning_space else (0, 255, 0))
+    
+    if center_Dis <= r_tuning_space:
+        paused = True
+        print("Center Intersect ", time)
 
     screen.blit(pygame.transform.smoothscale(fake_screen, screen.get_size()), (0, 0))
     pygame.display.flip()
