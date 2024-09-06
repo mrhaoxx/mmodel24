@@ -168,6 +168,8 @@ def get_point_out(theta):
     y = center[1] + r * math.sin(-theta)
     return x, y
 
+
+
 def get_point_direction_in(theta):
     r = a + b * theta
     return math.atan2(r * math.cos(theta) + math.sin(theta) * b,\
@@ -215,29 +217,6 @@ total_length = point_s[-1]
 
 def eq_head_point(theta, lambda1):
     return get_point_distance(theta) - lambda1
-
-def get_next_point(el_s):
-    global cur_point_idx
-    
-    r_length = total_length - el_s
-    
-    while (point_s[cur_point_idx] > r_length):
-        if cur_point_idx == 0:
-            return points[0], 0
-        cur_point_idx -= 1
-        
-    # tt = point_s[cur_point_idx + 1] - point_s[cur_point_idx]
-    # rl = r_length - point_s[cur_point_idx]
-    
-    # rate = rl / tt
-    
-    # theta = point_theta[cur_point_idx] + rate * (point_theta[cur_point_idx + 1] - point_theta[cur_point_idx])
-    
-    # print(fsolve(get_point_distance, point_theta[cur_point_idx],))
-    
-    theta = newton(eq_head_point, point_theta[cur_point_idx], args=(r_length,))
- 
-    return get_point_in(theta), theta
     
         
 def get_distance(p1, p2):
@@ -373,6 +352,7 @@ rate_2 = o_r / o_l
 o_point_1 = (intersect_in[0] * (1 - rate_1) + ipx_p_out[0] * rate_1, intersect_in[1] * (1 - rate_1) + ipx_p_out[1] * rate_1)
 o_point_2 = (intersect_out[0] * (1 - rate_2) + ipx_p_in[0] * rate_2, intersect_out[1] * (1 - rate_2) + ipx_p_in[1] * rate_2)
 
+o_beta = (math.pi - math.asin(o_w / (3 * o_r)))
 
 o_point1_circle_points = []
 o_point2_circle_points = []
@@ -391,6 +371,49 @@ while theta <= math.pi * 2:
     o_point2_circle_points.append((x, y))
     theta += 0.01
 
+def get_point_posR(theta):
+    x = o_point_1[0] + 2 * o_r * math.cos(theta)
+    y = o_point_1[1] + 2 * o_r * math.sin(theta)
+    return x, y
+    
+def get_point_negR(theta):
+    x = o_point_2[0] + o_r * math.cos(theta)
+    y = o_point_2[1] + o_r * math.sin(theta)
+    return x, y
+
+def curved(theta):
+    if theta > intersect_theta_in:
+        return get_point_in(theta)
+    elif theta < -intersect_theta_out:
+        return get_point_out(-theta)
+    elif theta > 0:
+        return get_point_posR( - theta * (o_beta / intersect_theta_in) + intersect_theta_in)
+    else:
+        return get_point_negR(- theta * (o_beta / intersect_theta_out) + intersect_theta_out)
+
+
+def get_next_point(el_s):
+    global cur_point_idx
+    
+    r_length = total_length - el_s
+    
+    while (point_s[cur_point_idx] > r_length):
+        if cur_point_idx == 0:
+            return points[0], 0
+        cur_point_idx -= 1
+        
+    # tt = point_s[cur_point_idx + 1] - point_s[cur_point_idx]
+    # rl = r_length - point_s[cur_point_idx]
+    
+    # rate = rl / tt
+    
+    # theta = point_theta[cur_point_idx] + rate * (point_theta[cur_point_idx + 1] - point_theta[cur_point_idx])
+    
+    # print(fsolve(get_point_distance, point_theta[cur_point_idx],))
+    
+    theta = newton(eq_head_point, point_theta[cur_point_idx], args=(r_length,))
+ 
+    return get_point_in(theta), theta
 
 running = True
 while running:
@@ -433,6 +456,12 @@ while running:
     
     pygame.draw.lines(fake_screen, (255, 0, 128), False, o_point1_circle_points, 2)
     pygame.draw.lines(fake_screen, (128, 0, 255), False, o_point2_circle_points, 2)
+    
+    theta = 20
+    while theta >= -20:
+        pygame.draw.circle(fake_screen, ( abs(255 * (theta / 100)), abs(255 * (theta / 100)), 0), curved(theta), 10)
+        theta -= 0.01
+        
 
 
     current_s = time * speed
