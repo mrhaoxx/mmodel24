@@ -43,6 +43,8 @@ delta_t = 0.001
 nodenum = 223
 speed = 100
 
+r_tuning_space = 450
+
 board_alpha = math.atan2(board_outer_width, (board_width / 2))
 board_slash = math.sqrt(pow(board_outer_width, 2) + pow(board_width / 2, 2))
 board_beta = 2*math.atan2(board_width / 2, board_outer_width)
@@ -135,6 +137,8 @@ points = []
 points_reverse = [] 
 point_s = []
 point_theta = []
+point_turning_space = []
+
 
 def dr_dtheta(theta):
     return b
@@ -182,6 +186,14 @@ while theta <= theta_max:
     theta += 0.01  # 角度步长，控制螺线的密度
 
 cur_point_idx = len(points) - 2
+
+
+theta = 0
+while theta <= math.pi * 2:
+    x = center[0] +  r_tuning_space * math.cos(theta)
+    y = center[1] +  r_tuning_space * math.sin(theta)
+    point_turning_space.append((x, y))
+    theta += 0.01
 
 total_length = point_s[-1]
 
@@ -318,11 +330,11 @@ while running:
     inner_lines = []
     checking_outer_points = []
     
-    pygame.draw.circle(fake_screen, (255, 0, 0), center, 50, 10)
-
     if len(points) > 1:
         pygame.draw.lines(fake_screen, (0, 0, 255), False, points, 2)
         pygame.draw.lines(fake_screen, (0, 255, 0), False, points_reverse, 2)
+        
+    pygame.draw.lines(fake_screen, (255, 0, 0), False, point_turning_space, 2)
     
     current_s = time * speed
     
