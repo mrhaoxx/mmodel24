@@ -37,8 +37,8 @@ board_width = 30.
 board_length_head = 341 - 55
 board_length = 220 - 55
 
-time = 400
-delta_t = 0.001
+time = 200
+delta_t = 0.01
 
 nodenum = 223
 speed = 100
@@ -391,7 +391,7 @@ while running:
         row_data['P_' + str(i)+ '_speed'] = speed_
         
         if i < 10:
-            GAME_FONT.render_to(fake_screen, (10, 80 + 25 * (i)), f"P_{i:3}: {_distance:.5f} {sec_point_theta:.8f} {p_x:12.5f},{p_y:12.5f} {speed_:10.5f}" , (0, 0, 0))
+            GAME_FONT.render_to(fake_screen, (10, 100 + 25 * (i)), f"P_{i:3}: {_distance:.5f} {sec_point_theta:.8f} {p_x:12.5f},{p_y:12.5f} {speed_:10.5f}" , (0, 0, 0))
         
         
         last_point_distance[i] = this_dis
@@ -421,6 +421,8 @@ while running:
     GAME_FONT.render_to(fake_screen, (10, 10), "DIS: " + str(distance), (0, 0, 0))
     GAME_FONT.render_to(fake_screen, (10, 30), "FPS: " + str(clock.get_fps()), (0, 0, 0))
     GAME_FONT.render_to(fake_screen, (10, 50), "TIME: " + str(time), (0, 0, 0))
+    
+    GAME_FONT.render_to(fake_screen, (10, 80), f"CENTER DIS: {get_distance(head_point, center)}", (255, 0, 0))
 
     screen.blit(pygame.transform.smoothscale(fake_screen, screen.get_size()), (0, 0))
     pygame.display.flip()
