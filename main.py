@@ -37,10 +37,10 @@ board_width = 30.
 board_length_head = 341 - 55
 board_length = 220 - 55
 
-time = 0
+time = 1320
 delta_t = 0.01
 
-nodenum = 223
+nodenum = 20
 speed = 100
 
 
@@ -185,27 +185,6 @@ def get_point_distance(theta, sp = 0):
     length, _ = quad(arc_length, sp, theta)
     return length 
 
-# 生成螺线的点
-theta = 0
-while theta <= theta_max:
-    r = a + b * theta
-    x = center[0] + r * math.cos(theta)
-    y = center[1] + r * math.sin(theta)
-    points.append((x, y))
-    
-    x_reverse = center[0] - r * math.cos(-theta)
-    y_reverse = center[1] + r * math.sin(-theta)
-    points_reverse.append((x_reverse, y_reverse))
-    
-    length = get_point_distance(theta)
-    
-    point_s.append(length)
-    point_theta.append(theta)
-    
-    theta += 0.1  # 角度步长，控制螺线的密度
-
-cur_point_idx = len(points) - 2
-
 
 theta = 0
 while theta <= math.pi * 2:
@@ -214,12 +193,8 @@ while theta <= math.pi * 2:
     point_turning_space.append((x, y))
     theta += 0.01
 
-total_length = point_s[-1]
 
-def eq_head_point(theta, lambda1):
-    return get_point_distance(theta) - lambda1
-    
-        
+
 def get_distance(p1, p2):
     return math.sqrt(pow(p1[0] - p2[0], 2) + pow(p1[1] - p2[1], 2))
         
@@ -283,11 +258,7 @@ def compute_v_next(v_i, b, l, theta1, theta2):
 
 paused = False
 
-last_point_distance = []
 
-for i in range(nodenum + 1):
-    last_point_distance.append(point_s[-1])
-    
 f = open('output.csv', mode='w', newline='', encoding='utf-8')
 fieldnames = ['time']
 row_data = {}
@@ -399,35 +370,68 @@ def curved_distance(theta):
     if theta > intersect_theta_in:
         return get_point_distance(theta, sp = intersect_theta_in) + o_circum_1
     elif theta < -intersect_theta_out:
-        return get_point_distance(-theta, sp = intersect_theta_out) - o_circum_2
+        return - get_point_distance(-theta, sp = intersect_theta_out) - o_circum_2
     elif theta > 0:
         return theta * (o_beta / intersect_theta_in) * 2 * o_r
     else:
         return theta * (o_beta / intersect_theta_out) * o_r
 
 
-def get_next_point(el_s):
+# 生成螺线的点
+theta =  - theta_max
+while theta <= theta_max:
+
+    points.append(curved(theta))
+    
+    point_s.append(curved_distance(theta))
+    
+    point_theta.append(theta)
+    
+    theta += 0.1  # 角度步长，控制螺线的密度
+
+cur_point_idx = len(points) - 2
+
+total_length = point_s[-1]
+
+def eq_head_point(theta, lambda1):
+    return curved_distance(theta) - lambda1
+    
+def get_head_point(el_s):
     global cur_point_idx
     
     r_length = total_length - el_s
     
-    while (point_s[cur_point_idx] > r_length):
+    while (point_s[cur_point_idx] >= r_length):
         if cur_point_idx == 0:
             return points[0], 0
         cur_point_idx -= 1
-        
-    # tt = point_s[cur_point_idx + 1] - point_s[cur_point_idx]
-    # rl = r_length - point_s[cur_point_idx]
-    
-    # rate = rl / tt
-    
-    # theta = point_theta[cur_point_idx] + rate * (point_theta[cur_point_idx + 1] - point_theta[cur_point_idx])
-    
-    # print(fsolve(get_point_distance, point_theta[cur_point_idx],))
-    
+        # print("Cur Point Idx", point_s[cur_point_idx],r_length, cur_point_idx)
+
     theta = newton(eq_head_point, point_theta[cur_point_idx], args=(r_length,))
- 
-    return get_point_in(theta), theta
+    
+    # print(r_length, point_s[cur_point_idx], theta , cur_point_idx)
+    
+    return curved(theta), theta
+
+last_point_distance = []
+
+for i in range(nodenum + 1):
+    last_point_distance.append(point_s[-1])
+    
+
+def eq_point_chain_sim(theta2, point1, distance):
+    if theta2 < theta1:
+        return 1e10
+    return get_distance(curved(theta2), point1) - distance
+    
+
+def get_point_chain_next_sim(theta1, point1, distace):
+    
+    theta = root_scalar(eq_point_chain_sim, bracket=[theta1, theta1 + 20 * math.pi], args=(point1, distace), method='brentq')
+    # theta = newton(eq_point_chain_sim, theta1, args=(point1, distace), maxiter=1000)
+    return theta.root, curved(theta.root)
+    # return theta, curved(theta)
+
 
 running = True
 while running:
@@ -450,58 +454,63 @@ while running:
     
     if len(points) > 1:
         pygame.draw.lines(fake_screen, (0, 0, 255), False, points, 2)
-        pygame.draw.lines(fake_screen, (0, 255, 0), False, points_reverse, 2)
         
     pygame.draw.lines(fake_screen, (255, 0, 0), False, point_turning_space, 2)
     
     pygame.draw.circle(fake_screen, (0, 0, 0), intersect_in, 5)
     pygame.draw.circle(fake_screen, (0, 0, 0), intersect_out, 5)
     
-    pygame.draw.lines(fake_screen, (255, 0, 0), False, [intersect_in_start, intersect_in_end], 2)
-    pygame.draw.lines(fake_screen, (255, 0, 0), False, [intersect_in_cross_start, intersect_in_cross_end], 2)
+    # pygame.draw.lines(fake_screen, (255, 0, 0), False, [intersect_in_start, intersect_in_end], 2)
+    # pygame.draw.lines(fake_screen, (255, 0, 0), False, [intersect_in_cross_start, intersect_in_cross_end], 2)
     
-    pygame.draw.lines(fake_screen, (0, 0, 0), False, [intersect_out_start, intersect_out_end], 2)
-    pygame.draw.lines(fake_screen, (0, 0, 0), False, [intersect_out_cross_start, intersect_out_cross_end], 2)
+    # pygame.draw.lines(fake_screen, (0, 0, 0), False, [intersect_out_start, intersect_out_end], 2)
+    # pygame.draw.lines(fake_screen, (0, 0, 0), False, [intersect_out_cross_start, intersect_out_cross_end], 2)
 
     # pygame.draw.circle(fake_screen, (111, 111, 0), ipx_p_in, 4)
     # pygame.draw.circle(fake_screen, (111, 111, 0), ipx_p_out, 4)
-    pygame.draw.circle(fake_screen, (0, 0, 0), o_point_1, 5)
-    pygame.draw.circle(fake_screen, (0, 0, 0), o_point_2, 5)
+    # pygame.draw.circle(fake_screen, (0, 0, 0), o_point_1, 5)
+    # pygame.draw.circle(fake_screen, (0, 0, 0), o_point_2, 5)
     
-    pygame.draw.lines(fake_screen, (255, 0, 128), False, o_point1_circle_points, 2)
-    pygame.draw.lines(fake_screen, (128, 0, 255), False, o_point2_circle_points, 2)
+    # pygame.draw.lines(fake_screen, (255, 0, 128), False, o_point1_circle_points, 2)
+    # pygame.draw.lines(fake_screen, (128, 0, 255), False, o_point2_circle_points, 2)
     
-    theta = 20
-    while theta >= -20:
-        pygame.draw.circle(fake_screen, ( abs(255 * (theta / 100)), abs(255 * (theta / 100)), 0), curved(theta), 2 )
-        theta -= 0.01
+    # theta = 20
+    # while theta >= -20:
+    #     pygame.draw.circle(fake_screen, ( abs(255 * (theta / 100)), abs(255 * (theta / 100)), 0), curved(theta), 2 )
+    #     theta -= 0.01
         
-    theta = - (time) * 1 + 1
+    # theta = - (time) * 1 + 1
     
-    pygame.draw.circle(fake_screen, ( 255, 0, 0), curved(theta), 10)
+    # pygame.draw.circle(fake_screen, ( 255, 0, 0), curved(theta), 10)
     
-    GAME_FONT.render_to(fake_screen, (500, 30), f"THETA:{theta:.3f} DIS: {curved_distance(theta)}", (0, 0, 0))
+    # GAME_FONT.render_to(fake_screen, (500, 30), f"THETA:{theta:.3f} DIS: {curved_distance(theta)}", (0, 0, 0))
 
     current_s = time * speed
     
-    head_point, theta1 = get_next_point(current_s)
+    head_point, theta1 = get_head_point(current_s)
     
     pygame.draw.circle(fake_screen, (255, 0, 0), head_point, 5)
     
     sec_point_theta = theta1
     sec_point = head_point
     speed_ = speed
+    
+    # this_dis = curved_distance(theta1)
+    # speed__ = (this_dis - last_point_distance[0]) / delta_t
+    # GAME_FONT.render_to(fake_screen, (10, 130 + 25 * (0)), f"P_{0:3}: {theta1:.8f} {head_point[0]:12.5f},{head_point[1]:12.5f} {speed__:10.5f}" , (0, 0, 0))
+    # last_point_distance[0] = this_dis
+    
     # speed__ = speed     
     
     for i in range(nodenum):
         
-        if sec_point_theta - theta1 > 3 * math.pi:
-            break
+        # if sec_point_theta - theta1 > 3 * math.pi:
+        #     break
         
         if i == 0:
-            _sec_point_theta, _sec_point = get_point_chain_next(sec_point_theta, lambda1_head)
+            _sec_point_theta, _sec_point = get_point_chain_next_sim(sec_point_theta, sec_point, board_length_head)
         else:
-            _sec_point_theta, _sec_point = get_point_chain_next(sec_point_theta, lambda1_body)
+            _sec_point_theta, _sec_point = get_point_chain_next_sim(sec_point_theta, sec_point, board_length)
             
         pygame.draw.circle(fake_screen, (0, 255 * (i/nodenum), 255 * (i/nodenum)), _sec_point, 3)
         
@@ -526,7 +535,7 @@ while running:
             
         this_dis = get_point_distance(sec_point_theta)
         
-        # speed__ = (this_dis - last_point_distance[i]) / delta_t
+        speed__ = (this_dis - last_point_distance[i]) / delta_t
         
         p_x = sec_point[0] - center[0]
         p_y = - sec_point[1] + center[1]
@@ -536,13 +545,13 @@ while running:
         row_data['P_' + str(i)+ '_speed'] = speed_
         
         if i < 15:
-            GAME_FONT.render_to(fake_screen, (10, 130 + 25 * (i)), f"P_{i:3}: {_distance:.5f} {sec_point_theta:.8f} {p_x:12.5f},{p_y:12.5f} {speed_:10.5f}" , (0, 0, 0))
+            GAME_FONT.render_to(fake_screen, (10, 130 + 25 * (i)), f"P_{i:3}: {_distance:.5f} {sec_point_theta:.8f} {p_x:12.5f},{p_y:12.5f} {speed__:10.5f}" , (0, 0, 0))
 
-        speed_ = compute_v_next(speed_, b, board_length_head if i == 0 else board_length, sec_point_theta , _sec_point_theta)
+        # speed_ = compute_v_next(speed_, b, board_length_head if i == 0 else board_length, sec_point_theta , _sec_point_theta)
         
         sec_point = _sec_point
         sec_point_theta = _sec_point_theta
-        # last_point_distance[i] = this_dis
+        last_point_distance[i] = this_dis
     
     row_data['time'] = time
     csv_writer.writerow(row_data)
