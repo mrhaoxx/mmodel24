@@ -37,11 +37,12 @@ board_width = 30.
 board_length_head = 341 - 55
 board_length = 220 - 55
 
-time = 1330
+time = 0
 delta_t = 0.01
 
 nodenum = 223
 speed = 100
+
 
 r_tuning_space = 450
 
@@ -180,8 +181,8 @@ def get_point_direction_out(theta):
     r = a + b * theta
     return math.atan2(- r * math.cos(theta) - math.sin(theta) * b, r * math.sin(theta) - b * math.cos(theta))
 
-def get_point_distance(theta):
-    length, _ = quad(arc_length, 0, theta)
+def get_point_distance(theta, sp = 0):
+    length, _ = quad(arc_length, sp, theta)
     return length 
 
 # 生成螺线的点
@@ -387,9 +388,22 @@ def curved(theta):
     elif theta < -intersect_theta_out:
         return get_point_out(-theta)
     elif theta > 0:
-        return get_point_posR( - theta * (o_beta / intersect_theta_in) + intersect_theta_in)
+        return get_point_posR(theta * (o_beta / intersect_theta_in) +  intersect_theta_in +  math.pi + (math.pi - o_beta) / 2)
     else:
-        return get_point_negR(- theta * (o_beta / intersect_theta_out) + intersect_theta_out)
+        return get_point_negR(-theta * (o_beta / intersect_theta_out) + intersect_theta_out  + (math.pi - o_beta) / 2)
+
+o_circum_1 = o_beta * 2 * o_r
+o_circum_2 = o_beta * o_r
+
+def curved_distance(theta):
+    if theta > intersect_theta_in:
+        return get_point_distance(theta, sp = intersect_theta_in) + o_circum_1
+    elif theta < -intersect_theta_out:
+        return get_point_distance(-theta, sp = intersect_theta_out) - o_circum_2
+    elif theta > 0:
+        return theta * (o_beta / intersect_theta_in) * 2 * o_r
+    else:
+        return theta * (o_beta / intersect_theta_out) * o_r
 
 
 def get_next_point(el_s):
@@ -440,8 +454,8 @@ while running:
         
     pygame.draw.lines(fake_screen, (255, 0, 0), False, point_turning_space, 2)
     
-    # pygame.draw.circle(fake_screen, (0, 0, 0), intersect_in, 5)
-    # pygame.draw.circle(fake_screen, (0, 0, 0), intersect_out, 5)
+    pygame.draw.circle(fake_screen, (0, 0, 0), intersect_in, 5)
+    pygame.draw.circle(fake_screen, (0, 0, 0), intersect_out, 5)
     
     pygame.draw.lines(fake_screen, (255, 0, 0), False, [intersect_in_start, intersect_in_end], 2)
     pygame.draw.lines(fake_screen, (255, 0, 0), False, [intersect_in_cross_start, intersect_in_cross_end], 2)
@@ -459,10 +473,14 @@ while running:
     
     theta = 20
     while theta >= -20:
-        pygame.draw.circle(fake_screen, ( abs(255 * (theta / 100)), abs(255 * (theta / 100)), 0), curved(theta), 10)
+        pygame.draw.circle(fake_screen, ( abs(255 * (theta / 100)), abs(255 * (theta / 100)), 0), curved(theta), 2 )
         theta -= 0.01
         
-
+    theta = - (time) * 1 + 1
+    
+    pygame.draw.circle(fake_screen, ( 255, 0, 0), curved(theta), 10)
+    
+    GAME_FONT.render_to(fake_screen, (500, 30), f"THETA:{theta:.3f} DIS: {curved_distance(theta)}", (0, 0, 0))
 
     current_s = time * speed
     
