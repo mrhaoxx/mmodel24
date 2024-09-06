@@ -37,8 +37,8 @@ board_width = 30.
 board_length_head = 341 - 55
 board_length = 220 - 55
 
-time = 300
-delta_t = 0.01
+time = 400
+delta_t = 0.001
 
 nodenum = 223
 speed = 100
@@ -73,9 +73,62 @@ def get_board_points(pt1, pt2):
     
     return [(x1, y1), (x2, y2), (x3, y3), (x4, y4)]
     
-def check_point_in(theta, pt, start_pt, end_pt):
-    rnds = theta // (0.5 * math.pi)
+def cross_product(p1, p2, p3):
+    """计算向量 p1p2 和 p1p3 的叉积"""
+    return (p2[0] - p1[0]) * (p3[1] - p1[1]) - (p3[0] - p1[0]) * (p2[1] - p1[1])
+
+def is_point_on_segment(p1, p2, p):
+    """判断点 p 是否在线段 p1p2 上"""
+    return min(p1[0], p2[0]) <= p[0] <= max(p1[0], p2[0]) and min(p1[1], p2[1]) <= p[1] <= max(p1[1], p2[1])
+
+def get_intersection_point(p1, p2, p3, p4):
+    """计算两条线段 p1p2 和 p3p4 的交点"""
+    x1, y1 = p1
+    x2, y2 = p2
+    x3, y3 = p3
+    x4, y4 = p4
+
+    # 计算线段的方向向量
+    denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4)
     
+    if denominator == 0:
+        return None  # 平行或共线
+
+    # 使用克莱姆法则计算交点
+    px = ((x1 * y2 - y1 * x2) * (x3 - x4) - (x1 - x2) * (x3 * y4 - y3 * x4)) / denominator
+    py = ((x1 * y2 - y1 * x2) * (y3 - y4) - (y1 - y2) * (x3 * y4 - y3 * x4)) / denominator
+
+    return (px, py)
+
+def is_intersecting_with_point(p1, p2, p3, p4):
+    """
+    判断两条线段 p1p2 和 p3p4 是否相交，并返回交点（如果有）
+    :param p1, p2: 第一条线段的端点
+    :param p3, p4: 第二条线段的端点
+    :return: (是否相交, 交点) 如果不相交，交点为 None
+    """
+    # 计算叉积，判断两条线段是否分隔两侧
+    d1 = cross_product(p3, p4, p1)
+    d2 = cross_product(p3, p4, p2)
+    d3 = cross_product(p1, p2, p3)
+    d4 = cross_product(p1, p2, p4)
+
+    # 如果两条线段跨越对方，则它们相交
+    if d1 * d2 < 0 and d3 * d4 < 0:
+        intersection_point = get_intersection_point(p1, p2, p3, p4)
+        return True, intersection_point
+
+    # 如果叉积为 0，检查点是否在线段上
+    if d1 == 0 and is_point_on_segment(p3, p4, p1):
+        return True, p1
+    if d2 == 0 and is_point_on_segment(p3, p4, p2):
+        return True, p2
+    if d3 == 0 and is_point_on_segment(p1, p2, p3):
+        return True, p3
+    if d4 == 0 and is_point_on_segment(p1, p2, p4):
+        return True, p4
+
+    return False, None
 
 # 反查点
 points = []
@@ -259,8 +312,13 @@ while running:
         continue
     # screen.fill((255, 255, 255))
     
+    
     fake_screen.fill((255, 255, 255))
     distance = 0
+    inner_lines = []
+    checking_outer_points = []
+    
+    pygame.draw.circle(fake_screen, (255, 0, 0), center, 50, 10)
 
     if len(points) > 1:
         pygame.draw.lines(fake_screen, (0, 0, 255), False, points, 2)
@@ -274,9 +332,13 @@ while running:
     
     sec_point_theta = theta1
     sec_point = head_point
+    speed_ = speed
     # speed__ = speed     
     
     for i in range(nodenum):
+        
+        if i > 50:
+            break
         
         if i == 0:
             _sec_point_theta, _sec_point = get_point_chain_next(sec_point_theta, lambda1_head)
@@ -290,23 +352,25 @@ while running:
         
         
         pts = get_board_points(_sec_point, sec_point)
-        pygame.draw.lines(fake_screen, (128, 128, 128), True, pts, 4)
-        for pt in pts:
-            pygame.draw.circle(fake_screen, (116, 152, 93), pt, 4)
+        pygame.draw.lines(fake_screen, (128, 128, 128), True, pts, 1)
+        # for pt in pts[0:1]:
+        # pygame.draw.circle(fake_screen, (116, 152, 93), pts[0], 4)
+        # pygame.draw.circle(fake_screen, (116, 152, 93), pts[3], 4)
+        pygame.draw.line(fake_screen, (0, 0, 0), pts[0], pts[3], 1)
         
-        # pygame.draw.line(fake_screen, (0, 0, 0), sec_point, _sec_point, 5)
+        if i > 3:
+            inner_lines.append((pts[0], pts[3]))
         
-        # pygame.draw.line(fake_screen, (255, 0, 0), _sec_point, pts[0], 5)
-        # pygame.draw.line(fake_screen, (255, 0, 0), _sec_point, pts[1], 5)
-        
-        # pygame.draw.line(fake_screen, (255, 0, 255), sec_point, pts[2], 5)
-        # pygame.draw.line(fake_screen, (255, 0, 255), sec_point, pts[3], 5)
-
+        if i == 0 or i == 1:
+            checking_outer_points.append((pts[1], pts[2]))
+            checking_outer_points.append((pts[1], pts[0]))
+            checking_outer_points.append((pts[3], pts[2]))
+            
         this_dis = get_point_distance(sec_point_theta)
         
-        speed_ = (this_dis - last_point_distance[i]) / delta_t
-        # speed___ = compute_v_next(speed__, b, board_length_head if i == 0 else board_length, sec_point_theta , _sec_point_theta)
+        # speed_ = (this_dis - last_point_distance[i]) / delta_t
         
+        speed_ = compute_v_next(speed_, b, board_length_head if i == 0 else board_length, sec_point_theta , _sec_point_theta)
         p_x = sec_point[0] - center[0]
         p_y = - sec_point[1] + center[1]
   
@@ -314,7 +378,7 @@ while running:
         row_data['P_' + str(i)+ '_y'] = p_y
         row_data['P_' + str(i)+ '_speed'] = speed_
         
-        if i < 60:
+        if i < 10:
             GAME_FONT.render_to(fake_screen, (10, 80 + 25 * (i)), f"P_{i:3}: {_distance:.5f} {sec_point_theta:.8f} {p_x:12.5f},{p_y:12.5f} {speed_:10.5f}" , (0, 0, 0))
         
         
@@ -325,6 +389,22 @@ while running:
     
     row_data['time'] = time
     csv_writer.writerow(row_data)
+    
+    for pt in checking_outer_points:
+        pygame.draw.lines(fake_screen, (0, 0, 255), False, pt, 2)
+
+        HAS_INTERSECT = False
+        P = None
+        for i in range(len(inner_lines)):
+            w, P = is_intersecting_with_point(inner_lines[i][0], inner_lines[i][1], pt[0], pt[1])
+            if w:
+                HAS_INTERSECT = True
+                break
+            
+        if HAS_INTERSECT:
+            paused = True
+            print("Intersect", pt, inner_lines[i], time)
+            pygame.draw.circle(fake_screen, (255, 0, 0), P, 5)
         
     GAME_FONT.render_to(fake_screen, (10, 10), "DIS: " + str(distance), (0, 0, 0))
     GAME_FONT.render_to(fake_screen, (10, 30), "FPS: " + str(clock.get_fps()), (0, 0, 0))
