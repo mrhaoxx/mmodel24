@@ -27,9 +27,9 @@ center = (SCALE_WIDTH / 2, SCALE_HEIGHT / 2)
 
 
 # 等距螺线参数
-a = 0  # 起始半径
-b = 45.03373 / (2 * math.pi)
-theta_max = 32 * math.pi  # 螺线角度的最大值
+a = 0 * math.pi  # 起始半径
+b = 170 / (2 * math.pi)
+theta_max = 32 * math.pi 
 
 board_outer_width = 027.5
 board_width = 30.
@@ -37,7 +37,7 @@ board_width = 30.
 board_length_head = 341 - 55
 board_length = 220 - 55
 
-time = 215
+time = 1330
 delta_t = 0.01
 
 nodenum = 223
@@ -162,6 +162,22 @@ def get_point_in(theta):
     y = center[1] + r * math.sin(theta)
     return x, y
 
+def get_point_out(theta):
+    r = a + b * theta
+    x = center[0] - r * math.cos(-theta)
+    y = center[1] + r * math.sin(-theta)
+    return x, y
+
+def get_point_direction_in(theta):
+    r = a + b * theta
+    return math.atan2(r * math.cos(theta) + math.sin(theta) * b,\
+                    - r * math.sin(theta) + b * math.cos(theta))
+
+
+def get_point_direction_out(theta):
+    r = a + b * theta
+    return math.atan2(- r * math.cos(theta) - math.sin(theta) * b, r * math.sin(theta) - b * math.cos(theta))
+
 def get_point_distance(theta):
     length, _ = quad(arc_length, 0, theta)
     return length 
@@ -183,7 +199,7 @@ while theta <= theta_max:
     point_s.append(length)
     point_theta.append(theta)
     
-    theta += 0.01  # 角度步长，控制螺线的密度
+    theta += 0.1  # 角度步长，控制螺线的密度
 
 cur_point_idx = len(points) - 2
 
@@ -311,6 +327,71 @@ csv_writer.writeheader()
 lambda1_head = (board_length_head * board_length_head) / (b  * b)
 lambda1_body = (board_length * board_length) / (b  * b)
 
+
+def eq_intersect_in_track(theta, target_dis, curve):
+    return get_distance(curve(theta), center) - target_dis
+
+intersect_theta_in = newton(eq_intersect_in_track, 0, args=(r_tuning_space,get_point_in))
+intersect_theta_in_direction_theta = get_point_direction_in(intersect_theta_in)
+intersect_theta_in_direction_theta_cross = intersect_theta_in_direction_theta + math.pi / 2
+intersect_in = get_point_in(intersect_theta_in)
+intersect_in_start = (intersect_in[0] - 100 * math.cos(intersect_theta_in_direction_theta), intersect_in[1] - 100 * math.sin(intersect_theta_in_direction_theta))
+intersect_in_end = (intersect_in[0] + 100 * math.cos(intersect_theta_in_direction_theta), intersect_in[1] + 100 * math.sin(intersect_theta_in_direction_theta))
+intersect_in_cross_start = (intersect_in[0] - 1000 * math.cos(intersect_theta_in_direction_theta_cross), intersect_in[1] - 1000 * math.sin(intersect_theta_in_direction_theta_cross))
+intersect_in_cross_end = (intersect_in[0] + 1000 * math.cos(intersect_theta_in_direction_theta_cross), intersect_in[1] + 1000 * math.sin(intersect_theta_in_direction_theta_cross))
+
+intersect_theta_out = newton(eq_intersect_in_track, 0, args=(r_tuning_space,get_point_out))
+intersect_theta_out_direction_theta = get_point_direction_out(intersect_theta_out)
+intersect_theta_out_direction_theta_cross = intersect_theta_out_direction_theta + math.pi / 2
+
+intersect_out = get_point_out(intersect_theta_out)
+intersect_out_start = (intersect_out[0] - 100 * math.cos(intersect_theta_out_direction_theta), intersect_out[1] - 100 * math.sin(intersect_theta_out_direction_theta))
+intersect_out_end = (intersect_out[0] + 100 * math.cos(intersect_theta_out_direction_theta), intersect_out[1] + 100 * math.sin(intersect_theta_out_direction_theta))
+intersect_out_cross_start = (intersect_out[0] - 1000 * math.cos(intersect_theta_out_direction_theta_cross), intersect_out[1] - 1000 * math.sin(intersect_theta_out_direction_theta_cross))
+intersect_out_cross_end = (intersect_out[0] + 1000 * math.cos(intersect_theta_out_direction_theta_cross), intersect_out[1] + 1000 * math.sin(intersect_theta_out_direction_theta_cross))
+
+
+ipx_p_in = get_intersection_point(intersect_in_start, intersect_in_end, intersect_out_cross_end, intersect_out_cross_start)
+ipx_p_out = get_intersection_point(intersect_out_start, intersect_out_end, intersect_in_cross_end, intersect_in_cross_start)
+
+
+o_w = get_distance(ipx_p_out, intersect_out)
+o_l = get_distance(ipx_p_in, intersect_out)
+
+print(intersect_theta_in)
+print(intersect_theta_out)
+
+phi = math.atan(1/intersect_theta_in)
+
+o_r = r_tuning_space / (3 * math.cos(phi))
+
+print(o_r)
+
+rate_1 = 2 * o_r / o_l
+rate_2 = o_r / o_l
+
+o_point_1 = (intersect_in[0] * (1 - rate_1) + ipx_p_out[0] * rate_1, intersect_in[1] * (1 - rate_1) + ipx_p_out[1] * rate_1)
+o_point_2 = (intersect_out[0] * (1 - rate_2) + ipx_p_in[0] * rate_2, intersect_out[1] * (1 - rate_2) + ipx_p_in[1] * rate_2)
+
+
+o_point1_circle_points = []
+o_point2_circle_points = []
+
+theta = 0
+while theta <= 2 * math.pi:
+    x = o_point_1[0] + 2 * o_r * math.cos(theta)
+    y = o_point_1[1] + 2 * o_r * math.sin(theta)
+    o_point1_circle_points.append((x, y))
+    theta += 0.01
+    
+theta = 0
+while theta <= math.pi * 2:
+    x = o_point_2[0] + o_r * math.cos(theta)
+    y = o_point_2[1] + o_r * math.sin(theta)
+    o_point2_circle_points.append((x, y))
+    theta += 0.01
+
+
 running = True
 while running:
     for event in pygame.event.get():
@@ -336,6 +417,24 @@ while running:
         
     pygame.draw.lines(fake_screen, (255, 0, 0), False, point_turning_space, 2)
     
+    # pygame.draw.circle(fake_screen, (0, 0, 0), intersect_in, 5)
+    # pygame.draw.circle(fake_screen, (0, 0, 0), intersect_out, 5)
+    
+    pygame.draw.lines(fake_screen, (255, 0, 0), False, [intersect_in_start, intersect_in_end], 2)
+    pygame.draw.lines(fake_screen, (255, 0, 0), False, [intersect_in_cross_start, intersect_in_cross_end], 2)
+    
+    pygame.draw.lines(fake_screen, (0, 0, 0), False, [intersect_out_start, intersect_out_end], 2)
+    pygame.draw.lines(fake_screen, (0, 0, 0), False, [intersect_out_cross_start, intersect_out_cross_end], 2)
+
+    # pygame.draw.circle(fake_screen, (111, 111, 0), ipx_p_in, 4)
+    # pygame.draw.circle(fake_screen, (111, 111, 0), ipx_p_out, 4)
+    pygame.draw.circle(fake_screen, (0, 0, 0), o_point_1, 5)
+    pygame.draw.circle(fake_screen, (0, 0, 0), o_point_2, 5)
+    
+    pygame.draw.lines(fake_screen, (255, 0, 128), False, o_point1_circle_points, 2)
+    pygame.draw.lines(fake_screen, (128, 0, 255), False, o_point2_circle_points, 2)
+
+
     current_s = time * speed
     
     head_point, theta1 = get_next_point(current_s)
@@ -380,9 +479,8 @@ while running:
             
         this_dis = get_point_distance(sec_point_theta)
         
-        # speed_ = (this_dis - last_point_distance[i]) / delta_t
+        # speed__ = (this_dis - last_point_distance[i]) / delta_t
         
-        speed_ = compute_v_next(speed_, b, board_length_head if i == 0 else board_length, sec_point_theta , _sec_point_theta)
         p_x = sec_point[0] - center[0]
         p_y = - sec_point[1] + center[1]
   
@@ -390,17 +488,30 @@ while running:
         row_data['P_' + str(i)+ '_y'] = p_y
         row_data['P_' + str(i)+ '_speed'] = speed_
         
-        if i < 10:
+        if i < 15:
             GAME_FONT.render_to(fake_screen, (10, 130 + 25 * (i)), f"P_{i:3}: {_distance:.5f} {sec_point_theta:.8f} {p_x:12.5f},{p_y:12.5f} {speed_:10.5f}" , (0, 0, 0))
+
+        speed_ = compute_v_next(speed_, b, board_length_head if i == 0 else board_length, sec_point_theta , _sec_point_theta)
         
-        last_point_distance[i] = this_dis
         sec_point = _sec_point
         sec_point_theta = _sec_point_theta
-        # speed__ = speed___
+        # last_point_distance[i] = this_dis
     
     row_data['time'] = time
     csv_writer.writerow(row_data)
     
+    GAME_FONT.render_to(fake_screen, (10, 10), "DIS: " + str(distance), (0, 0, 0))
+    GAME_FONT.render_to(fake_screen, (10, 30), "FPS: " + str(clock.get_fps()), (0, 0, 0))
+    GAME_FONT.render_to(fake_screen, (10, 50), "TIME: " + str(time), (0, 0, 0))
+    
+    center_Dis = get_distance(head_point, center)
+    
+    GAME_FONT.render_to(fake_screen, (10, 80), f"CENTER DIS: {center_Dis}", (255, 0, 0) if center_Dis > r_tuning_space else (0, 255, 0))
+        
+    # if center_Dis <= r_tuning_space:
+    #     # paused = True
+    #     print("Center Intersect ", time)
+
     intersection_points = []
     HAS_INTERSECT = False
     
@@ -414,8 +525,6 @@ while running:
                 HAS_INTERSECT = True
                 intersection_points.append(P)
                 break
-        
-            
             
     if HAS_INTERSECT:
         paused = True
@@ -425,18 +534,6 @@ while running:
             pygame.draw.circle(fake_screen, (255, 0, 0), pt, 5)
     else:
         GAME_FONT.render_to(fake_screen, (10, 110), f"Not Intersect", (0, 255, 0))
-        
-    GAME_FONT.render_to(fake_screen, (10, 10), "DIS: " + str(distance), (0, 0, 0))
-    GAME_FONT.render_to(fake_screen, (10, 30), "FPS: " + str(clock.get_fps()), (0, 0, 0))
-    GAME_FONT.render_to(fake_screen, (10, 50), "TIME: " + str(time), (0, 0, 0))
-    
-    center_Dis = get_distance(head_point, center)
-    
-    GAME_FONT.render_to(fake_screen, (10, 80), f"CENTER DIS: {center_Dis}", (255, 0, 0) if center_Dis > r_tuning_space else (0, 255, 0))
-    
-    if center_Dis <= r_tuning_space:
-        paused = True
-        print("Center Intersect ", time)
 
     screen.blit(pygame.transform.smoothscale(fake_screen, screen.get_size()), (0, 0))
     pygame.display.flip()
