@@ -11,8 +11,8 @@ pygame.init()
 WINDOW_WIDTH=600
 WINDOW_HEIGHT=450
 
-SCALE_WIDTH = 4 * WINDOW_WIDTH
-SCALE_HEIGHT = 4 * WINDOW_HEIGHT
+SCALE_WIDTH = 12 * WINDOW_WIDTH
+SCALE_HEIGHT = 12 * WINDOW_HEIGHT
 
 screen =  pygame.display.set_mode((WINDOW_WIDTH*2, WINDOW_HEIGHT*2))
 fake_screen = pygame.Surface((SCALE_WIDTH, SCALE_HEIGHT))
@@ -21,6 +21,7 @@ fake_screen.fill((255, 255, 255))
 
 clock = pygame.time.Clock()
 GAME_FONT = pygame.freetype.SysFont("consolas", 24)
+GAME_FONT_SMALL = pygame.freetype.SysFont("consolas", 20)
 
 # 圆心位置
 center = (SCALE_WIDTH / 2, SCALE_HEIGHT / 2)
@@ -37,11 +38,11 @@ board_width = 30.
 board_length_head = 341 - 55
 board_length = 220 - 55
 
-time = 660 / 2
-delta_t = 0.01
+time = 0
+delta_t = 1
 
-nodenum = 1
-speed = 400
+nodenum = 222
+speed = 100
 
 
 r_tuning_space = 450
@@ -455,6 +456,7 @@ max_spd = {}
 for i in range(nodenum + 1):
     max_spd[i] = 0
 
+iter = 0
 running = True
 while running:
     for event in pygame.event.get():
@@ -467,6 +469,7 @@ while running:
         clock.tick(60)
         continue
     # screen.fill((255, 255, 255))
+    iter += 1
     
     
     fake_screen.fill((255, 255, 255))
@@ -477,7 +480,7 @@ while running:
     if len(points) > 1:
         pygame.draw.lines(fake_screen, (0, 0, 255), False, points, 2)
         
-    pygame.draw.lines(fake_screen, (255, 0, 0), False, point_turning_space, 2)
+    # pygame.draw.lines(fake_screen, (255, 0, 0), False, point_turning_space, 2)
     
     pygame.draw.circle(fake_screen, (0, 0, 0), intersect_in, 5)
     pygame.draw.circle(fake_screen, (0, 0, 0), intersect_out, 5)
@@ -527,22 +530,23 @@ while running:
         if i == 0:
             _sec_point_theta, _sec_point = get_point_chain_next_sim(sec_point_theta, sec_point, board_length_head)
         elif i == nodenum:
-            break
+            pass
         else:
             _sec_point_theta, _sec_point = get_point_chain_next_sim(sec_point_theta, sec_point, board_length)
             
-        pygame.draw.circle(fake_screen, (0, 255 * (i/nodenum), 255 * (i/nodenum)), _sec_point, 3)
+        if not nodenum == 0:
+            pygame.draw.circle(fake_screen, (0, 255 * (i/nodenum), 255 * (i/nodenum)), _sec_point, 3)
         
         _distance = get_distance(sec_point, _sec_point)
         distance += _distance
-        
-        
-        pts = get_board_points(_sec_point, sec_point)
-        pygame.draw.lines(fake_screen, (128, 128, 128), True, pts, 1)
+    
+        if not i == nodenum:
+            pts = get_board_points(_sec_point, sec_point)
+            pygame.draw.lines(fake_screen, (128, 128, 128), True, pts, 3)
         # for pt in pts[0:1]:
         # pygame.draw.circle(fake_screen, (116, 152, 93), pts[0], 4)
         # pygame.draw.circle(fake_screen, (116, 152, 93), pts[3], 4)
-        pygame.draw.line(fake_screen, (0, 0, 0), pts[0], pts[3], 1)
+        # pygame.draw.line(fake_screen, (0, 0, 0), pts[0], pts[3], 1)
         
         # if i > 3:
         #     inner_lines.append((pts[0], pts[3]))
@@ -556,7 +560,7 @@ while running:
         
         speed__ = (this_dis - last_point_distance[i]) / delta_t
         
-        if last_point_distance[i] != 0:
+        if iter > 3:
             max_spd[i] = max(max_spd[i], -speed__)
         
         p_x = sec_point[0] - center[0]
@@ -566,8 +570,8 @@ while running:
         row_data['P_' + str(i)+ '_y'] = p_y
         row_data['P_' + str(i)+ '_speed'] = speed_
 
-        if i < 6:
-            GAME_FONT.render_to(fake_screen, (10, 130 + 25 * (i)), f"P_{i:3}: {_distance:.5f} {sec_point_theta:.8f} {p_x:12.5f},{p_y:12.5f} {speed__:10.5f} max {max_spd[i]:10.5f}" , (0, 0, 0))
+        if i < 16:
+            GAME_FONT_SMALL.render_to(fake_screen, (10, 130 + 20 * (i)), f"P_{i:3}: {sec_point_theta:12.5f} {p_x:12.5f},{p_y:12.5f} {-speed__:10.5f} {max_spd[i]:20.10f}" , (0, 0, 0))
 
         # speed_ = compute_v_next(speed_, b, board_length_head if i == 0 else board_length, sec_point_theta , _sec_point_theta)
         
@@ -578,7 +582,7 @@ while running:
     row_data['time'] = time
     csv_writer.writerow(row_data)
     
-    GAME_FONT.render_to(fake_screen, (10, 10), "DIS: " + str(distance), (0, 0, 0))
+    GAME_FONT.render_to(fake_screen, (10, 10), f"DIS:  {distance:.6f}", (0, 0, 0))
     GAME_FONT.render_to(fake_screen, (10, 30), "FPS: " + str(clock.get_fps()), (0, 0, 0))
     GAME_FONT.render_to(fake_screen, (10, 50), "TIME: " + str(time), (0, 0, 0))
     
