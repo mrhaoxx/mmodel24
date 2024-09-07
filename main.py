@@ -40,7 +40,7 @@ board_length = 220 - 55
 time = 660 / 2
 delta_t = 0.01
 
-nodenum = 100
+nodenum = 1
 speed = 400
 
 
@@ -305,7 +305,6 @@ intersect_out_cross_end = (intersect_out[0] + 1000 * math.cos(intersect_theta_ou
 ipx_p_in = get_intersection_point(intersect_in_start, intersect_in_end, intersect_out_cross_end, intersect_out_cross_start)
 ipx_p_out = get_intersection_point(intersect_out_start, intersect_out_end, intersect_in_cross_end, intersect_in_cross_start)
 
-
 o_w = get_distance(ipx_p_out, intersect_out)
 o_l = get_distance(ipx_p_in, intersect_out)
 
@@ -315,6 +314,12 @@ print(intersect_theta_out)
 phi = math.atan(1/intersect_theta_in)
 
 o_r = r_tuning_space / (3 * math.cos(phi))
+
+def Cosine(a, b, c):
+    return math.acos((a * a + b * b - c * c) / (2 * a * b))
+
+board_o_head_theta_1 = Cosine(2 * o_r, 2 * o_r , board_length_head)
+board_o_head_theta_2 = Cosine(o_r, o_r , board_length_head)
 
 print(o_r)
 
@@ -420,19 +425,27 @@ for i in range(nodenum + 1):
     
 
 def eq_point_chain_sim(theta2, point1, distance):
-    if theta2 < theta1:
-        return 1e10
-    return get_distance(curved(theta2), point1) - distance
+    # if theta2 < theta1:
+    #     return 1e10
+    return (get_distance(curved(theta2), point1) - distance)
     
 
-def get_point_chain_next_sim(theta1, point1, distace):
+def get_point_chain_next_sim(theta1, point1, distance):
     # if theta1 > intersect_theta_in:
     #     theta = get_point_chain_next(theta1, distace * distace / (b*b))
     #     # theta = 
     # else:
-    theta = root_scalar(eq_point_chain_sim, bracket=[theta1, theta1 + intersect_theta_in/2], args=(point1, distace), method='brentq')
     
-    # theta = newton(eq_point_chain_sim, theta1, args=(point1, distace), maxiter=1000)
+    itec = math.pi / 4
+    
+    while eq_point_chain_sim(theta1 + itec, point1, distance) < 0:
+        itec += math.pi / 4
+        
+    # print(itec, eq_point_chain_sim(theta1 + itec, point1, distance))
+    theta = root_scalar(eq_point_chain_sim, bracket=[theta1, theta1 + itec], args=(point1, distance), method='brentq')
+    # theta = newton(eq_point_chain_sim, theta1, args=(point1, distance), maxiter=1000)
+    # theta = minimize(eq_point_chain_sim, theta1, args=(point1, distance))
+    # print(theta)
     return theta.root, curved(theta.root)
     # return theta, curved(theta)
 
@@ -504,20 +517,17 @@ while running:
     sec_point = head_point
     speed_ = speed
     
-    # this_dis = curved_distance(theta1)
-    # speed__ = (this_dis - last_point_distance[0]) / delta_t
-    # GAME_FONT.render_to(fake_screen, (10, 130 + 25 * (0)), f"P_{0:3}: {theta1:.8f} {head_point[0]:12.5f},{head_point[1]:12.5f} {speed__:10.5f}" , (0, 0, 0))
-    # last_point_distance[0] = this_dis
-    
     # speed__ = speed     
     
-    for i in range(nodenum):
+    for i in range(nodenum + 1):
         
         # if sec_point_theta - theta1 > 3 * math.pi:
         #     break
         
         if i == 0:
             _sec_point_theta, _sec_point = get_point_chain_next_sim(sec_point_theta, sec_point, board_length_head)
+        elif i == nodenum:
+            break
         else:
             _sec_point_theta, _sec_point = get_point_chain_next_sim(sec_point_theta, sec_point, board_length)
             
@@ -534,13 +544,13 @@ while running:
         # pygame.draw.circle(fake_screen, (116, 152, 93), pts[3], 4)
         pygame.draw.line(fake_screen, (0, 0, 0), pts[0], pts[3], 1)
         
-        if i > 3:
-            inner_lines.append((pts[0], pts[3]))
+        # if i > 3:
+        #     inner_lines.append((pts[0], pts[3]))
         
-        if i == 0 or i == 1:
-            checking_outer_points.append((pts[1], pts[2]))
-            checking_outer_points.append((pts[1], pts[0]))
-            checking_outer_points.append((pts[3], pts[2]))
+        # if i == 0 or i == 1:
+        #     checking_outer_points.append((pts[1], pts[2]))
+        #     checking_outer_points.append((pts[1], pts[0]))
+        #     checking_outer_points.append((pts[3], pts[2]))
             
         this_dis = curved_distance(sec_point_theta)
         
@@ -555,8 +565,8 @@ while running:
         row_data['P_' + str(i)+ '_x'] = p_x
         row_data['P_' + str(i)+ '_y'] = p_y
         row_data['P_' + str(i)+ '_speed'] = speed_
-        
-        if i < 60:
+
+        if i < 6:
             GAME_FONT.render_to(fake_screen, (10, 130 + 25 * (i)), f"P_{i:3}: {_distance:.5f} {sec_point_theta:.8f} {p_x:12.5f},{p_y:12.5f} {speed__:10.5f} max {max_spd[i]:10.5f}" , (0, 0, 0))
 
         # speed_ = compute_v_next(speed_, b, board_length_head if i == 0 else board_length, sec_point_theta , _sec_point_theta)
@@ -580,28 +590,28 @@ while running:
     #     # paused = True
     #     print("Center Intersect ", time)
 
-    intersection_points = []
-    HAS_INTERSECT = False
+    # intersection_points = []
+    # HAS_INTERSECT = False
     
-    for pt in checking_outer_points:
-        pygame.draw.lines(fake_screen, (0, 0, 255), False, pt, 2)
+    # for pt in checking_outer_points:
+    #     pygame.draw.lines(fake_screen, (0, 0, 255), False, pt, 2)
 
-        P = None
-        for i in range(len(inner_lines)):
-            w, P = is_intersecting_with_point(inner_lines[i][0], inner_lines[i][1], pt[0], pt[1])
-            if w:
-                HAS_INTERSECT = True
-                intersection_points.append(P)
-                break
+    #     P = None
+    #     for i in range(len(inner_lines)):
+    #         w, P = is_intersecting_with_point(inner_lines[i][0], inner_lines[i][1], pt[0], pt[1])
+    #         if w:
+    #             HAS_INTERSECT = True
+    #             intersection_points.append(P)
+    #             break
             
-    if HAS_INTERSECT:
-        # paused = True
-        print("Intersect", pt, inner_lines[i], time)
-        GAME_FONT.render_to(fake_screen, (10, 110), f"Intersect at: {intersection_points}", (255, 0, 0))
-        for pt in intersection_points:
-            pygame.draw.circle(fake_screen, (255, 0, 0), pt, 5)
-    else:
-        GAME_FONT.render_to(fake_screen, (10, 110), f"Not Intersect", (0, 255, 0))
+    # if HAS_INTERSECT:
+    #     # paused = True
+    #     print("Intersect", pt, inner_lines[i], time)
+    #     GAME_FONT.render_to(fake_screen, (10, 110), f"Intersect at: {intersection_points}", (255, 0, 0))
+    #     for pt in intersection_points:
+    #         pygame.draw.circle(fake_screen, (255, 0, 0), pt, 5)
+    # else:
+    #     GAME_FONT.render_to(fake_screen, (10, 110), f"Not Intersect", (0, 255, 0))
 
     screen.blit(pygame.transform.smoothscale(fake_screen, screen.get_size()), (0, 0))
     pygame.display.flip()
