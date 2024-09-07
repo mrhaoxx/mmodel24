@@ -198,8 +198,8 @@ class loong:
 
             self.o_circum_1 = self.o_beta * 2 * self.o_r
             self.o_circum_2 = self.o_beta * self.o_r
-
-
+            
+            self.c_bsquared2 = self.b / 2
             self.c_sp_in = self.c_bsquared2 * (self.intersect_theta_in * math.sqrt(1 + self.intersect_theta_in * self.intersect_theta_in) + math.log(self.intersect_theta_in + math.sqrt(1 + self.intersect_theta_in * self.intersect_theta_in)))
             self.c_sp_out = self.c_bsquared2 * (self.intersect_theta_out * math.sqrt(1 + self.intersect_theta_out * self.intersect_theta_out) + math.log(self.intersect_theta_out + math.sqrt(1 + self.intersect_theta_out * self.intersect_theta_out)))
         else:
@@ -242,8 +242,8 @@ class loong:
             self.c_sp_in = 0
 
             self.c_sp_out = 0
+            self.c_bsquared2 = self.b / 2
 
-        self.c_bsquared2 = self.b / 2
         
         self.points = []
         self.points_s = []

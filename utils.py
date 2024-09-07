@@ -1,4 +1,5 @@
 import math 
+import numpy as np
 
 def cross_product(p1, p2, p3):
     """计算向量 p1p2 和 p1p3 的叉积"""
@@ -64,3 +65,32 @@ def get_distance(p1, p2):
 def Cosine(a, b, c):
     return math.acos((a * a + b * b - c * c) / (2 * a * b))
 
+
+def point_to_segment_distance(point, seg_start, seg_end):
+    # 将点和线段的起始点、终点转换为 numpy 向量
+    point = np.array(point)
+    seg_start = np.array(seg_start)
+    seg_end = np.array(seg_end)
+    
+    # 线段的向量
+    seg_vector = seg_end - seg_start
+    point_vector = point - seg_start
+    
+    # 线段长度的平方
+    seg_len_sq = np.dot(seg_vector, seg_vector)
+    
+    if seg_len_sq == 0:
+        # 线段的起点和终点重合，则直接返回点到起点的距离
+        return np.linalg.norm(point - seg_start)
+    
+    # 计算投影的比例 t
+    t = np.dot(point_vector, seg_vector) / seg_len_sq
+    
+    # 限制 t 在 [0, 1] 范围内，表示点在线段的投影
+    t = max(0, min(1, t))
+    
+    # 计算最近的点
+    nearest_point = seg_start + t * seg_vector
+    
+    # 返回点到最近点的距离
+    return np.linalg.norm(point - nearest_point)

@@ -1,7 +1,7 @@
 from core import loong, check_collision
 import math
 
-
+from utils import point_to_segment_distance
 lo = loong(pitch=55, r_turning_space=0)
 
 import pygame
@@ -43,12 +43,28 @@ def tp(pt):
 def tps(pts):
     return move_points(mirrory_points(pts), center[0], center[1])
 
-iter = 0
 
 paused = False
 running = True
 
-speed = 10
+speed = 100
+
+time = 0
+
+min_step = 1e-6
+
+max_step = 1e-1
+
+cur_step = max_step
+
+max_dist = 20
+
+def trans_to_step(dist):
+    global cur_step
+    
+    dist = min(max_dist, dist)
+    
+    cur_step = min_step + (max_step - min_step) * (dist / max_dist)
 
 while running:
     for event in pygame.event.get():
@@ -63,7 +79,7 @@ while running:
     
     fake_screen.fill((255, 255, 255))
     
-    points = lo.get_looong(speed * iter, cutting=3 * math.pi)
+    points = lo.get_looong(speed * time, cutting=3 * math.pi)
     
     corners = []
     inner_lines = []
@@ -93,6 +109,7 @@ while running:
         for pt in pts:
             pygame.draw.circle(fake_screen, (255, 0, 0),tp(pt), 3)
     
+    min_dist = None
     
     for corner in corners:
         tf, pts = check_collision(corner, inner_lines)
@@ -101,19 +118,33 @@ while running:
             paused = True
             for pt in pts:
                 pygame.draw.circle(fake_screen, (0, 255, 0), tp(pt), 10)
+                
+        for ln in inner_lines:
             
-  
+            dist = point_to_segment_distance(corner[1], ln[0], ln[1])
+            
+            if min_dist is None:
+                min_dist = dist
+            else:
+                min_dist = min(min_dist, dist)
+                        
+    trans_to_step(min_dist)
+
+    GAME_FONT.render_to(fake_screen, (10, 10), f"TIME: {time}", (0, 0, 0))
+    GAME_FONT.render_to(fake_screen, (10, 40), f"FPS: {clock.get_fps()}", (0, 0, 0))
+    GAME_FONT.render_to(fake_screen, (10, 70), f"POINTS: {len(points)}", (0, 0, 0))
+    GAME_FONT.render_to(fake_screen, (10, 100), f"CUR_STEP: {cur_step}", (0, 0, 0))
+    GAME_FONT.render_to(fake_screen, (10, 130), f"DIST: {min_dist}", (0, 0, 0))
     
-    GAME_FONT.render_to(fake_screen, (10, 10), f"ITER: {iter}", (0, 0, 0))
-    GAME_FONT.render_to(fake_screen, (10, 30), f"FPS: {clock.get_fps()}", (0, 0, 0))
-    GAME_FONT.render_to(fake_screen, (10, 60), f"POINTS: {len(points)}", (0, 0, 0))
+    
 
-
+    
+    
     screen.blit(pygame.transform.smoothscale(fake_screen, screen.get_size()), (0, 0))
     pygame.display.flip()
     clock.tick()
     
-    iter += 1
+    time += cur_step
     
 pygame.quit()    
             
