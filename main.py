@@ -11,8 +11,8 @@ pygame.init()
 WINDOW_WIDTH=600
 WINDOW_HEIGHT=450
 
-SCALE_WIDTH = 12 * WINDOW_WIDTH
-SCALE_HEIGHT = 12 * WINDOW_HEIGHT
+SCALE_WIDTH = 4 * WINDOW_WIDTH
+SCALE_HEIGHT = 4 * WINDOW_HEIGHT
 
 screen =  pygame.display.set_mode((WINDOW_WIDTH*2, WINDOW_HEIGHT*2))
 fake_screen = pygame.Surface((SCALE_WIDTH, SCALE_HEIGHT))
@@ -39,9 +39,9 @@ board_length_head = 341 - 55
 board_length = 220 - 55
 
 time = 0
-delta_t = 1
+delta_t = 0.01
 
-nodenum = 222
+nodenum = 100
 speed = 100
 
 
@@ -451,6 +451,11 @@ def get_point_chain_next_sim(theta1, point1, distance):
     # return theta, curved(theta)
 
 
+print( total_length - curved_distance(intersect_theta_in))
+
+time = (total_length - curved_distance(intersect_theta_in)) / speed
+
+print(time)
 max_spd = {}
 
 for i in range(nodenum + 1):
@@ -482,8 +487,8 @@ while running:
         
     # pygame.draw.lines(fake_screen, (255, 0, 0), False, point_turning_space, 2)
     
-    pygame.draw.circle(fake_screen, (0, 0, 0), intersect_in, 5)
-    pygame.draw.circle(fake_screen, (0, 0, 0), intersect_out, 5)
+    # pygame.draw.circle(fake_screen, (0, 0, 0), intersect_in, 5)
+    # pygame.draw.circle(fake_screen, (0, 0, 0), intersect_out, 5)
     
     # pygame.draw.lines(fake_screen, (255, 0, 0), False, [intersect_in_start, intersect_in_end], 2)
     # pygame.draw.lines(fake_screen, (255, 0, 0), False, [intersect_in_cross_start, intersect_in_cross_end], 2)
@@ -570,7 +575,7 @@ while running:
         row_data['P_' + str(i)+ '_y'] = p_y
         row_data['P_' + str(i)+ '_speed'] = speed_
 
-        if i < 16:
+        if i < 6:
             GAME_FONT_SMALL.render_to(fake_screen, (10, 130 + 20 * (i)), f"P_{i:3}: {sec_point_theta:12.5f} {p_x:12.5f},{p_y:12.5f} {-speed__:10.5f} {max_spd[i]:20.10f}" , (0, 0, 0))
 
         # speed_ = compute_v_next(speed_, b, board_length_head if i == 0 else board_length, sec_point_theta , _sec_point_theta)
