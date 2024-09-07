@@ -1,7 +1,8 @@
-from core import loong
+from core import loong, check_collision
+import math
 
 
-lo = loong(pitch=55)
+lo = loong(pitch=55, r_turning_space=0)
 
 import pygame
 pygame.init()
@@ -35,41 +36,78 @@ def move_points(points, dx, dy):
 def mirrory_points(points):
     return [(point[0], -point[1]) for point in points]
 
+
+def tp(pt):
+    return move_point(mirrory_point(pt), center[0], center[1])
+
+def tps(pts):
+    return move_points(mirrory_points(pts), center[0], center[1])
+
 iter = 0
 
 paused = False
 running = True
+
+speed = 10
+
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
         if event.type == pygame.MOUSEBUTTONDOWN:
             paused = not paused
+            
+    if paused:
+        clock.tick(60)
+        continue
     
     fake_screen.fill((255, 255, 255))
     
-    points = lo.get_looong(iter)
+    points = lo.get_looong(speed * iter, cutting=3 * math.pi)
+    
+    corners = []
+    inner_lines = []
     
     for pts in points:
-        pygame.draw.circle(fake_screen, (0, 0, 0), move_point(mirrory_point(pts), center[0], center[1]), 5)
+        pygame.draw.circle(fake_screen, (0, 0, 0), tp(pts), 5)
         
     for i in range(len(points) - 1):
-        pygame.draw.line(fake_screen, (0, 0, 0), move_point(mirrory_point(points[i]), center[0], center[1]), move_point(mirrory_point(points[i+1]), center[0], center[1]), 2)
-        if i < len(points) - 1:
-            this_pt = points[i]
-            next_pt = points[i + 1]
-            
-            pts = lo.get_board_points(this_pt, next_pt)
-            pygame.draw.lines(fake_screen, (128, 128, 128), True, move_points(mirrory_points(pts), center[0], center[1]), 1)
-
-            for pt in pts:
-                pygame.draw.circle(fake_screen, (255, 0, 0), move_point(mirrory_point(pt), center[0], center[1]), 3)
+        pygame.draw.line(fake_screen, (0, 0, 0), tp(points[i]), tp(points[i+1]), 2)
+        this_pt = points[i]
+        next_pt = points[i + 1]
         
+        pts = lo.get_board_points(this_pt, next_pt)
+        pygame.draw.lines(fake_screen, (128, 128, 128), True, tps(pts), 1)
+        
+        
+        if i > 4:
+            inner_lines.append((pts[1], pts[2]))
+            pygame.draw.line(fake_screen, (205, 86, 63), tp(pts[1]), tp(pts[2]), 2)
+            
+        if i <= 4:
+            cor = (pts[1], pts[0], pts[3])
+            corners.append(cor)
+            for pt in cor:
+                pygame.draw.circle(fake_screen, (0, 0, 255), tp(pt), 5)
+
+        for pt in pts:
+            pygame.draw.circle(fake_screen, (255, 0, 0),tp(pt), 3)
     
     
+    for corner in corners:
+        tf, pts = check_collision(corner, inner_lines)
+        
+        if tf:
+            paused = True
+            for pt in pts:
+                pygame.draw.circle(fake_screen, (0, 255, 0), tp(pt), 10)
+            
+  
     
-    GAME_FONT.render_to(fake_screen, (10, 30), "FPS: " + str(clock.get_fps()), (0, 0, 0))
+    GAME_FONT.render_to(fake_screen, (10, 10), f"ITER: {iter}", (0, 0, 0))
+    GAME_FONT.render_to(fake_screen, (10, 30), f"FPS: {clock.get_fps()}", (0, 0, 0))
     GAME_FONT.render_to(fake_screen, (10, 60), f"POINTS: {len(points)}", (0, 0, 0))
+
 
     screen.blit(pygame.transform.smoothscale(fake_screen, screen.get_size()), (0, 0))
     pygame.display.flip()

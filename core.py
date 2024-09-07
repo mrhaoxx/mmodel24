@@ -1,7 +1,7 @@
 import math
 
 from scipy.optimize import newton, root_scalar
-from utils import get_distance, get_intersection_point
+from utils import get_distance, get_intersection_point, is_intersecting_with_point
 
 
 class loong:
@@ -42,7 +42,7 @@ class loong:
 
 
     def curved(self, theta):
-        if theta > self.intersect_theta_in:
+        if theta >= self.intersect_theta_in:
             return self.get_point_in(theta)
         elif theta < -self.intersect_theta_out:
             return self.get_point_out(-theta)
@@ -62,7 +62,7 @@ class loong:
     
 
     def curved_distance(self, theta):
-        if theta > self.intersect_theta_in:
+        if theta >= self.intersect_theta_in:
             return self.get_point_distance_in(theta) + self.o_circum_1
         elif theta < -self.intersect_theta_out:
             return - self.get_point_distance_out(-theta) - self.o_circum_2
@@ -107,7 +107,7 @@ class loong:
         theta = root_scalar(self.eq_head_point, bracket=[self.points_theta[self.cur_point_idx], self.points_theta[self.cur_point_idx+1]], args=(r_length,))
         return self.curved(theta.root), theta.root
 
-    def get_looong(self, distance_from_starting_point):
+    def get_looong(self, distance_from_starting_point, cutting = None):
 
         head_point, theta1 = self.get_head_point(distance_from_starting_point)
             
@@ -119,6 +119,9 @@ class loong:
         
         for i in range(self.nodenum + 1):
             points_result.append(sec_point)
+            if cutting is not None:
+                if sec_point_theta - theta1 > cutting:
+                    break
             
             if i == self.nodenum:
                 pass
@@ -146,80 +149,119 @@ class loong:
         self.board_slash = math.sqrt(pow(self.board_outer_width, 2) + pow(self.board_width / 2, 2))
         self.board_beta = 2*math.atan2(self.board_width / 2, self.board_outer_width)
 
-
+        if r_turning_space > 0:
         # 螺旋线与转弯空间的交点的 theta, 进入方向
-        self.intersect_theta_in = newton(self.eq_intersect_in_track, 0, args=(self.r_tuning_space,self.get_point_in))
+            self.intersect_theta_in = newton(self.eq_intersect_in_track, 0, args=(self.r_tuning_space,self.get_point_in))
 
-        # 进入方向： 螺旋线的切线方向
-        self.intersect_theta_in_direction_theta = self.get_point_direction_in(self.intersect_theta_in)
+            # 进入方向： 螺旋线的切线方向
+            self.intersect_theta_in_direction_theta = self.get_point_direction_in(self.intersect_theta_in)
 
-        # 进入方向： 螺旋线的法线方向
-        self.intersect_theta_in_direction_theta_perpendicular = self.intersect_theta_in_direction_theta + math.pi / 2
-        self.intersect_in = self.get_point_in(self.intersect_theta_in)
+            # 进入方向： 螺旋线的法线方向
+            self.intersect_theta_in_direction_theta_perpendicular = self.intersect_theta_in_direction_theta + math.pi / 2
+            self.intersect_in = self.get_point_in(self.intersect_theta_in)
 
-        self.intersect_in_start = (self.intersect_in[0] - 100 * math.cos(self.intersect_theta_in_direction_theta), self.intersect_in[1] - 100 * math.sin(self.intersect_theta_in_direction_theta))
-        self.intersect_in_end = (self.intersect_in[0] + 100 * math.cos(self.intersect_theta_in_direction_theta), self.intersect_in[1] + 100 * math.sin(self.intersect_theta_in_direction_theta))
-        self.intersect_in_cross_start = (self.intersect_in[0] - 1000 * math.cos(self.intersect_theta_in_direction_theta_perpendicular), self.intersect_in[1] - 1000 * math.sin(self.intersect_theta_in_direction_theta_perpendicular))
-        self.intersect_in_cross_end = (self.intersect_in[0] + 1000 * math.cos(self.intersect_theta_in_direction_theta_perpendicular), self.intersect_in[1] + 1000 * math.sin(self.intersect_theta_in_direction_theta_perpendicular))
+            self.intersect_in_start = (self.intersect_in[0] - 100 * math.cos(self.intersect_theta_in_direction_theta), self.intersect_in[1] - 100 * math.sin(self.intersect_theta_in_direction_theta))
+            self.intersect_in_end = (self.intersect_in[0] + 100 * math.cos(self.intersect_theta_in_direction_theta), self.intersect_in[1] + 100 * math.sin(self.intersect_theta_in_direction_theta))
+            self.intersect_in_cross_start = (self.intersect_in[0] - 1000 * math.cos(self.intersect_theta_in_direction_theta_perpendicular), self.intersect_in[1] - 1000 * math.sin(self.intersect_theta_in_direction_theta_perpendicular))
+            self.intersect_in_cross_end = (self.intersect_in[0] + 1000 * math.cos(self.intersect_theta_in_direction_theta_perpendicular), self.intersect_in[1] + 1000 * math.sin(self.intersect_theta_in_direction_theta_perpendicular))
 
-        self.intersect_theta_out = newton(self.eq_intersect_in_track, 0, args=(self.r_tuning_space,self.get_point_out))
+            self.intersect_theta_out = newton(self.eq_intersect_in_track, 0, args=(self.r_tuning_space,self.get_point_out))
 
-        self.intersect_theta_out_direction_theta = self.get_point_direction_out(self.intersect_theta_out)
-        self.intersect_theta_out_direction_theta_perpendicular = self.intersect_theta_out_direction_theta + math.pi / 2
+            self.intersect_theta_out_direction_theta = self.get_point_direction_out(self.intersect_theta_out)
+            self.intersect_theta_out_direction_theta_perpendicular = self.intersect_theta_out_direction_theta + math.pi / 2
 
-        self.intersect_out = self.get_point_out(self.intersect_theta_out)
-        self.intersect_out_start = (self.intersect_out[0] - 100 * math.cos(self.intersect_theta_out_direction_theta), self.intersect_out[1] - 100 * math.sin(self.intersect_theta_out_direction_theta))
-        self.intersect_out_end = (self.intersect_out[0] + 100 * math.cos(self.intersect_theta_out_direction_theta), self.intersect_out[1] + 100 * math.sin(self.intersect_theta_out_direction_theta))
-        self.intersect_out_cross_start = (self.intersect_out[0] - 1000 * math.cos(self.intersect_theta_out_direction_theta_perpendicular), self.intersect_out[1] - 1000 * math.sin(self.intersect_theta_out_direction_theta_perpendicular))
-        self.intersect_out_cross_end = (self.intersect_out[0] + 1000 * math.cos(self.intersect_theta_out_direction_theta_perpendicular), self.intersect_out[1] + 1000 * math.sin(self.intersect_theta_out_direction_theta_perpendicular))
+            self.intersect_out = self.get_point_out(self.intersect_theta_out)
+            self.intersect_out_start = (self.intersect_out[0] - 100 * math.cos(self.intersect_theta_out_direction_theta), self.intersect_out[1] - 100 * math.sin(self.intersect_theta_out_direction_theta))
+            self.intersect_out_end = (self.intersect_out[0] + 100 * math.cos(self.intersect_theta_out_direction_theta), self.intersect_out[1] + 100 * math.sin(self.intersect_theta_out_direction_theta))
+            self.intersect_out_cross_start = (self.intersect_out[0] - 1000 * math.cos(self.intersect_theta_out_direction_theta_perpendicular), self.intersect_out[1] - 1000 * math.sin(self.intersect_theta_out_direction_theta_perpendicular))
+            self.intersect_out_cross_end = (self.intersect_out[0] + 1000 * math.cos(self.intersect_theta_out_direction_theta_perpendicular), self.intersect_out[1] + 1000 * math.sin(self.intersect_theta_out_direction_theta_perpendicular))
 
-        self.intersect_in_point_intersect = get_intersection_point(self.intersect_in_start, self.intersect_in_end, self.intersect_out_cross_end, self.intersect_out_cross_start)
-        self.intersect_out_point_intersect = get_intersection_point(self.intersect_out_start, self.intersect_out_end, self.intersect_in_cross_end, self.intersect_in_cross_start)
+            self.intersect_in_point_intersect = get_intersection_point(self.intersect_in_start, self.intersect_in_end, self.intersect_out_cross_end, self.intersect_out_cross_start)
+            self.intersect_out_point_intersect = get_intersection_point(self.intersect_out_start, self.intersect_out_end, self.intersect_in_cross_end, self.intersect_in_cross_start)
 
-        self.o_w = get_distance(self.intersect_out_point_intersect, self.intersect_out)
-        self.o_l = get_distance(self.intersect_in_point_intersect, self.intersect_out)
+            self.o_w = get_distance(self.intersect_out_point_intersect, self.intersect_out)
+            self.o_l = get_distance(self.intersect_in_point_intersect, self.intersect_out)
 
-        # print(o_w, o_l)
+            # print(o_w, o_l)
 
-        self.phi = math.atan(1/self.intersect_theta_in)
+            self.phi = math.atan(1/self.intersect_theta_in)
 
-        self.o_r = self.r_tuning_space / (3 * math.cos(self.phi))
+            self.o_r = self.r_tuning_space / (3 * math.cos(self.phi))
 
-        rate_1 = 2 * self.o_r / self.o_l
-        rate_2 = self.o_r / self.o_l
+            rate_1 = 2 * self.o_r / self.o_l
+            rate_2 = self.o_r / self.o_l
 
-        self.o_point_1 = (self.intersect_in[0] * (1 - rate_1) + self.intersect_out_point_intersect[0] * rate_1, self.intersect_in[1] * (1 - rate_1) + self.intersect_out_point_intersect[1] * rate_1)
-        self.o_point_2 = (self.intersect_out[0] * (1 - rate_2) + self.intersect_in_point_intersect[0] * rate_2, self.intersect_out[1] * (1 - rate_2) + self.intersect_in_point_intersect[1] * rate_2)
+            self.o_point_1 = (self.intersect_in[0] * (1 - rate_1) + self.intersect_out_point_intersect[0] * rate_1, self.intersect_in[1] * (1 - rate_1) + self.intersect_out_point_intersect[1] * rate_1)
+            self.o_point_2 = (self.intersect_out[0] * (1 - rate_2) + self.intersect_in_point_intersect[0] * rate_2, self.intersect_out[1] * (1 - rate_2) + self.intersect_in_point_intersect[1] * rate_2)
 
-        self.o_beta = (math.pi - math.asin(self.o_w / (3 * self.o_r)))
+            self.o_beta = (math.pi - math.asin(self.o_w / (3 * self.o_r)))
 
-        self.o_circum_1 = self.o_beta * 2 * self.o_r
-        self.o_circum_2 = self.o_beta * self.o_r
+            self.o_circum_1 = self.o_beta * 2 * self.o_r
+            self.o_circum_2 = self.o_beta * self.o_r
 
+
+            self.c_sp_in = self.c_bsquared2 * (self.intersect_theta_in * math.sqrt(1 + self.intersect_theta_in * self.intersect_theta_in) + math.log(self.intersect_theta_in + math.sqrt(1 + self.intersect_theta_in * self.intersect_theta_in)))
+            self.c_sp_out = self.c_bsquared2 * (self.intersect_theta_out * math.sqrt(1 + self.intersect_theta_out * self.intersect_theta_out) + math.log(self.intersect_theta_out + math.sqrt(1 + self.intersect_theta_out * self.intersect_theta_out)))
+        else:
+            self.intersect_theta_in = 0
+            self.intersect_theta_out = 0
+            self.intersect_theta_in_direction_theta = 0
+            self.intersect_theta_out_direction_theta = 0
+            self.intersect_theta_in_direction_theta_perpendicular = 0
+            self.intersect_theta_out_direction_theta_perpendicular = 0
+            self.intersect_in = (0, 0)
+            self.intersect_out = (0, 0)
+            self.intersect_in_start = (0, 0)
+            self.intersect_in_end = (0, 0)
+            self.intersect_in_cross_start = (0, 0)
+            self.intersect_in_cross_end = (0, 0)
+            self.intersect_out_start = (0, 0)
+            self.intersect_out_end = (0, 0)
+            self.intersect_out_cross_start = (0, 0)
+            self.intersect_out_cross_end = (0, 0)
+
+            self.intersect_in_point_intersect = (0, 0)
+            self.intersect_out_point_intersect = (0, 0)
+
+            self.o_w = 0
+            self.o_l = 0
+
+            self.phi = 0
+
+            self.o_r = 0
+
+            self.o_point_1 = (0, 0)
+            self.o_point_2 = (0, 0)
+
+            self.o_beta = 0
+
+            self.o_circum_1 = 0
+            self.o_circum_2 = 0
+
+
+            self.c_sp_in = 0
+
+            self.c_sp_out = 0
 
         self.c_bsquared2 = self.b / 2
-
-        self.c_sp_in = self.c_bsquared2 * (self.intersect_theta_in * math.sqrt(1 + self.intersect_theta_in * self.intersect_theta_in) + math.log(self.intersect_theta_in + math.sqrt(1 + self.intersect_theta_in * self.intersect_theta_in)))
-
-        self.c_sp_out = self.c_bsquared2 * (self.intersect_theta_out * math.sqrt(1 + self.intersect_theta_out * self.intersect_theta_out) + math.log(self.intersect_theta_out + math.sqrt(1 + self.intersect_theta_out * self.intersect_theta_out)))
-
-
+        
         self.points = []
         self.points_s = []
         self.points_theta = []
 
-        # 生成螺线的点
         theta =  - self.theta_max
         while theta <= self.theta_max:
             self.points.append(self.curved(theta))
             self.points_s.append(self.curved_distance(theta))
             self.points_theta.append(theta)
-            
+        
             theta += 0.01 
+            
 
         self.cur_point_idx = len(self.points) - 2
 
         self.total_length = self.points_s[-1]
+        
 
     
     def get_board_points(self, pt1, pt2):
@@ -266,3 +308,18 @@ def get_speed(l: loong, time, speed, interval = 1e-4):
     points_before = l.get_looong((time - interval) * speed) 
     points_after = l.get_looong((time + interval) * speed)
     return get_ptr_speeds(points_before, points_after, 2 * interval)
+
+def check_collision(corner, lines):
+    line1_corner = (corner[0], corner[1])
+    line2_corner = (corner[1], corner[2])
+        
+
+    for i in lines:
+        w, p1 = is_intersecting_with_point(line1_corner[0], line1_corner[1], i[0], i[1])
+        w2, p2 = is_intersecting_with_point(line2_corner[0], line2_corner[1], i[0], i[1])
+        if w and w2:
+            return True, [p1, p2]
+        if w or w2:
+            return True, [p1 if w else p2]
+        
+    return False, []
