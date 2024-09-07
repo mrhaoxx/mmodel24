@@ -28,6 +28,13 @@ def move_point(point, dx, dy):
 
 def mirrory_point(point):
     return (point[0], -point[1])
+
+def move_points(points, dx, dy):
+    return [(point[0] + dx, point[1] + dy) for point in points]
+
+def mirrory_points(points):
+    return [(point[0], -point[1]) for point in points]
+
 iter = 0
 
 paused = False
@@ -44,7 +51,20 @@ while running:
     points = lo.get_looong(iter)
     
     for pts in points:
-        pygame.draw.circle(fake_screen, (0, 0, 0), move_point(mirrory_point(pts), center[0], center[1]), 10)
+        pygame.draw.circle(fake_screen, (0, 0, 0), move_point(mirrory_point(pts), center[0], center[1]), 5)
+        
+    for i in range(len(points) - 1):
+        pygame.draw.line(fake_screen, (0, 0, 0), move_point(mirrory_point(points[i]), center[0], center[1]), move_point(mirrory_point(points[i+1]), center[0], center[1]), 2)
+        if i < len(points) - 1:
+            this_pt = points[i]
+            next_pt = points[i + 1]
+            
+            pts = lo.get_board_points(this_pt, next_pt)
+            pygame.draw.lines(fake_screen, (128, 128, 128), True, move_points(mirrory_points(pts), center[0], center[1]), 1)
+
+            for pt in pts:
+                pygame.draw.circle(fake_screen, (255, 0, 0), move_point(mirrory_point(pt), center[0], center[1]), 3)
+        
     
     
     

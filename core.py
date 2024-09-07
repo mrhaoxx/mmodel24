@@ -221,8 +221,35 @@ class loong:
 
         self.total_length = self.points_s[-1]
 
-# print(get_looong(0))
+    
+    def get_board_points(self, pt1, pt2):
+        theta = math.atan2((pt1[1] - pt2[1]),(pt2[0] - pt1[0]))
         
+        alpha = math.pi / 2 - theta - self.board_alpha
+        
+        d1 = (self.board_slash * math.cos(alpha))
+        d2 = (self.board_slash * math.sin(alpha))
+        
+        sigma = (math.pi / 2 ) - self.board_beta + alpha
+        
+        d3 = self.board_slash * math.cos(sigma)
+        d4 = self.board_slash * math.sin(sigma)
+        
+        x1 = pt1[0] - d1
+        y1 = pt1[1] - d2
+        
+        x2 = pt1[0] - d4
+        y2 = pt1[1] + d3
+        
+        x3 = pt2[0] + d1
+        y3 = pt2[1] + d2
+        
+        x4 = pt2[0] + d4
+        y4 = pt2[1] - d3
+        
+        return [(x1, y1), (x2, y2), (x3, y3), (x4, y4)]
+            
+            
 def get_ptr_speeds(points_before, points_after, interval):
     speeds = []
     for i in range(len(points_before)):
