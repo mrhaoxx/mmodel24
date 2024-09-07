@@ -37,11 +37,11 @@ board_width = 30.
 board_length_head = 341 - 55
 board_length = 220 - 55
 
-time = 1320
+time = 660 / 2
 delta_t = 0.01
 
-nodenum = 20
-speed = 100
+nodenum = 100
+speed = 400
 
 
 r_tuning_space = 450
@@ -426,12 +426,21 @@ def eq_point_chain_sim(theta2, point1, distance):
     
 
 def get_point_chain_next_sim(theta1, point1, distace):
+    # if theta1 > intersect_theta_in:
+    #     theta = get_point_chain_next(theta1, distace * distace / (b*b))
+    #     # theta = 
+    # else:
+    theta = root_scalar(eq_point_chain_sim, bracket=[theta1, theta1 + intersect_theta_in/2], args=(point1, distace), method='brentq')
     
-    theta = root_scalar(eq_point_chain_sim, bracket=[theta1, theta1 + 20 * math.pi], args=(point1, distace), method='brentq')
     # theta = newton(eq_point_chain_sim, theta1, args=(point1, distace), maxiter=1000)
     return theta.root, curved(theta.root)
     # return theta, curved(theta)
 
+
+max_spd = {}
+
+for i in range(nodenum + 1):
+    max_spd[i] = 0
 
 running = True
 while running:
@@ -537,6 +546,9 @@ while running:
         
         speed__ = (this_dis - last_point_distance[i]) / delta_t
         
+        if last_point_distance[i] != 0:
+            max_spd[i] = max(max_spd[i], -speed__)
+        
         p_x = sec_point[0] - center[0]
         p_y = - sec_point[1] + center[1]
   
@@ -544,8 +556,8 @@ while running:
         row_data['P_' + str(i)+ '_y'] = p_y
         row_data['P_' + str(i)+ '_speed'] = speed_
         
-        if i < 30:
-            GAME_FONT.render_to(fake_screen, (10, 130 + 25 * (i)), f"P_{i:3}: {_distance:.5f} {sec_point_theta:.8f} {p_x:12.5f},{p_y:12.5f} {speed__:10.5f}" , (0, 0, 0))
+        if i < 60:
+            GAME_FONT.render_to(fake_screen, (10, 130 + 25 * (i)), f"P_{i:3}: {_distance:.5f} {sec_point_theta:.8f} {p_x:12.5f},{p_y:12.5f} {speed__:10.5f} max {max_spd[i]:10.5f}" , (0, 0, 0))
 
         # speed_ = compute_v_next(speed_, b, board_length_head if i == 0 else board_length, sec_point_theta , _sec_point_theta)
         
