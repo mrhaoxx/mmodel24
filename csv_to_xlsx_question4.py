@@ -37,7 +37,7 @@ df_transposed_loc.index = [get_loc_row_name(i) for i in range(df_transposed_loc.
 df_spd = pd.read_csv(csv_file_spd, header=None)
 df_transposed_spd = df_spd.transpose()
 
-df_transposed_spd.columns = [f"{i}s" for i in range(df_transposed_spd.shape[1])]
+df_transposed_spd.columns = [f"{i - 100}s" for i in range(df_transposed_spd.shape[1])]
 df_transposed_spd.index = [get_spd_row_name(i) for i in range(df_transposed_spd.shape[0])]
 
 
