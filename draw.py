@@ -2,7 +2,7 @@ from core import loong, check_collision
 import math
 
 from utils import point_to_segment_distance, get_distance
-lo = loong(pitch=55, r_turning_space=0)
+lo = loong(pitch=170, r_turning_space=450)
 
 import pygame
 pygame.init()
@@ -51,22 +51,27 @@ speed = 100
 
 time = 0
 
-min_step = 1e-6
+time = (lo.total_length - lo.curved_distance(lo.intersect_theta_in)) / speed
 
-max_step = 1e-1
+time -= 100
 
-cur_step = max_step
+# min_step = 1e-6
+
+# max_step = 1e-1
+
+
+cur_step = 1e-2
 
 max_dist = 20
 
 r_turning_space = 450
 
-def trans_to_step(dist):
-    global cur_step
+# def trans_to_step(dist):
+#     global cur_step
     
-    dist = min(max_dist, dist)
+#     dist = min(max_dist, dist)
     
-    cur_step = min_step + (max_step - min_step) * (dist / max_dist)
+#     cur_step = min_step + (max_step - min_step) * (dist / max_dist)
 
 while running:
     for event in pygame.event.get():
@@ -130,16 +135,16 @@ while running:
             else:
                 min_dist = min(min_dist, dist)
                         
-    trans_to_step(min_dist)
+    # trans_to_step(min_dist)
     
     
     center_Dis = get_distance(points[0], (0,0))
     
     GAME_FONT.render_to(fake_screen, (10, 160), f"CENTER DIS: {center_Dis}", (255, 0, 0) if center_Dis > r_turning_space else (0, 255, 0))
     
-    if center_Dis <= r_turning_space:
-        paused = True
-        print("Center Intersect ", time)
+    # if center_Dis <= r_turning_space:
+    #     paused = True
+    #     print("Center Intersect ", time)
 
 
     GAME_FONT.render_to(fake_screen, (10, 10), f"TIME: {time}", (0, 0, 0))
@@ -150,8 +155,6 @@ while running:
     
     
 
-
-    
     screen.blit(pygame.transform.smoothscale(fake_screen, screen.get_size()), (0, 0))
     pygame.display.flip()
     clock.tick()
