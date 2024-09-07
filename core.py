@@ -101,8 +101,11 @@ class loong:
                 return self.points[0], 0
             self.cur_point_idx -= 1
 
-        theta = newton(self.eq_head_point, self.points_theta[self.cur_point_idx], args=(r_length,))
-        return self.curved(theta), theta
+        # print(self.cur_point_idx)
+        # print(self.points_s[self.cur_point_idx-1], self.points_s[self.cur_point_idx+1], r_length)
+        # print(self.eq_head_point(self.points_theta[self.cur_point_idx-1], r_length), self.eq_head_point(self.points_theta[self.cur_point_idx+1], r_length))
+        theta = root_scalar(self.eq_head_point, bracket=[self.points_theta[self.cur_point_idx], self.points_theta[self.cur_point_idx+1]], args=(r_length,))
+        return self.curved(theta.root), theta.root
 
     def get_looong(self, distance_from_starting_point):
 
@@ -212,7 +215,7 @@ class loong:
             self.points_s.append(self.curved_distance(theta))
             self.points_theta.append(theta)
             
-            theta += 0.1 
+            theta += 0.01 
 
         self.cur_point_idx = len(self.points) - 2
 
