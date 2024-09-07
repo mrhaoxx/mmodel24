@@ -35,3 +35,5 @@ def get_board_points(pt1, pt2):
     y4 = pt2[1] - d3
     
     return [(x1, y1), (x2, y2), (x3, y3), (x4, y4)]
+
+
