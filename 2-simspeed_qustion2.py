@@ -2,7 +2,7 @@ from utils import get_distance
 
 from core import loong, get_speed
 
-time = 412.4568550760522
+time = 412.4738380504162
 
 l = loong(pitch=55, r_turning_space=0)
 

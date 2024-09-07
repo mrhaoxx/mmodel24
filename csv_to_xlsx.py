@@ -15,6 +15,8 @@ def get_spd_row_name(i):
         return "龙头 (m/s)"
     elif i == 223:
         return "龙尾（后）(m/s)"
+    elif i == 222:
+        return "龙尾 (m/s)"
     else:
         return f"第 {i} 节龙身 (m/s)"
     
@@ -23,6 +25,8 @@ def get_loc_row_name(ri):
     t = "x" if ri % 2 == 0 else "y"
     if i == 0:
         return f"龙头{t}(m)"
+    elif i == 222:
+        return f"龙尾{t}(m)"
     elif i == 223:
         return f"龙尾（后）{t}(m)"
     else:

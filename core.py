@@ -132,7 +132,7 @@ class loong:
         
         return points_result
     
-    def __init__(self, pitch = 170, theta_max = 32 * math.pi, nodenum = 223, r_turning_space = 450) -> None:
+    def __init__(self, pitch = 170, theta_max = 32 * math.pi, nodenum = 223, r_turning_space = 450, dense = 0.01) -> None:
         
         self.a = 0
         self.b = pitch / (2 * math.pi)
@@ -251,18 +251,18 @@ class loong:
         self.points_s = []
         self.points_theta = []
 
-        theta =  - self.theta_max
-        while theta <= self.theta_max:
+        theta =  - self.theta_max - 0.01
+        while theta <= self.theta_max + 0.01:
             self.points.append(self.curved(theta))
             self.points_s.append(self.curved_distance(theta))
             self.points_theta.append(theta)
         
-            theta += 0.01 
+            theta += dense
             
 
         self.cur_point_idx = len(self.points) - 2
 
-        self.total_length = self.points_s[-1]
+        self.total_length = self.curved_distance(self.theta_max)
         
 
     
