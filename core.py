@@ -223,4 +223,19 @@ class loong:
 
 # print(get_looong(0))
         
-        
+def get_ptr_speeds(points_before, points_after, interval):
+    speeds = []
+    for i in range(len(points_before)):
+        distance = get_distance(points_before[i], points_after[i])
+        speeds.append(distance / interval)
+    return speeds
+
+def get_speed(l: loong, time, speed, interval = 1e-4):
+    if time - interval < 0:
+        points_before = l.get_looong(time * speed)
+        points_after = l.get_looong((time + interval) * speed)
+        return get_ptr_speeds(points_before, points_after, interval)
+    
+    points_before = l.get_looong((time - interval) * speed) 
+    points_after = l.get_looong((time + interval) * speed)
+    return get_ptr_speeds(points_before, points_after, 2 * interval)
