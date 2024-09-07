@@ -96,6 +96,8 @@ class loong:
         
         r_length = self.total_length - el_s
         
+        self.cur_point_idx += 20
+        self.cur_point_idx = min(self.cur_point_idx, len(self.points) - 2)
         while (self.points_s[self.cur_point_idx] >= r_length):
             if self.cur_point_idx == 0:
                 return self.points[0], 0

@@ -1,8 +1,10 @@
-from core import loong, check_collision
+from core import loong, get_speed
 import math
 
 from utils import point_to_segment_distance, get_distance
 lo = loong(pitch=170, r_turning_space=450)
+
+lo2 = loong(pitch=170, r_turning_space=450)
 
 import pygame
 pygame.init()
@@ -53,25 +55,24 @@ time = 0
 
 time = (lo.total_length - lo.curved_distance(lo.intersect_theta_in)) / speed
 
-time -= 100
+min_step = 1e-7
 
-# min_step = 1e-6
+max_step = 1e-1
 
-# max_step = 1e-1
+cur_step = max_step
 
+max_speed = 160.5
 
-cur_step = 1e-2
-
-max_dist = 20
+_max_sped = 0
 
 r_turning_space = 450
 
-# def trans_to_step(dist):
-#     global cur_step
+def trans_to_step(speed):
+    global cur_step
     
-#     dist = min(max_dist, dist)
+    dist = min(max_speed, speed)
     
-#     cur_step = min_step + (max_step - min_step) * (dist / max_dist)
+    cur_step = max_step + (min_step - max_step) * (dist / max_speed)
 
 while running:
     for event in pygame.event.get():
@@ -86,10 +87,13 @@ while running:
     
     fake_screen.fill((255, 255, 255))
     
-    points = lo.get_looong(speed * time, cutting=3 * math.pi)
+    points = lo.get_looong(speed * time)
     
-    corners = []
-    inner_lines = []
+    speeds = get_speed(lo2, time, speed)
+    
+    
+    # corners = []
+    # inner_lines = []
     
     for pts in points:
         pygame.draw.circle(fake_screen, (0, 0, 0), tp(pts), 5)
@@ -103,44 +107,46 @@ while running:
         pygame.draw.lines(fake_screen, (128, 128, 128), True, tps(pts), 1)
         
         
-        if i > 4:
-            inner_lines.append((pts[1], pts[2]))
-            pygame.draw.line(fake_screen, (205, 86, 63), tp(pts[1]), tp(pts[2]), 2)
+        # if i > 4:
+        #     inner_lines.append((pts[1], pts[2]))
+        #     pygame.draw.line(fake_screen, (205, 86, 63), tp(pts[1]), tp(pts[2]), 2)
             
-        if i <= 4:
-            cor = (pts[1], pts[0], pts[3])
-            corners.append(cor)
-            for pt in cor:
-                pygame.draw.circle(fake_screen, (0, 0, 255), tp(pt), 5)
+        # if i <= 4:
+        #     cor = (pts[1], pts[0], pts[3])
+        #     corners.append(cor)
+        #     for pt in cor:
+        #         pygame.draw.circle(fake_screen, (0, 0, 255), tp(pt), 5)
 
-        for pt in pts:
-            pygame.draw.circle(fake_screen, (255, 0, 0),tp(pt), 3)
+        # for pt in pts:
+        #     pygame.draw.circle(fake_screen, (255, 0, 0),tp(pt), 3)
     
-    min_dist = None
+    min_dist = max(speeds)
     
-    for corner in corners:
-        tf, pts = check_collision(corner, inner_lines)
+    _max_sped = max(_max_sped, min_dist)
+    
+    # for corner in corners:
+    #     tf, pts = check_collision(corner, inner_lines)
         
-        if tf:
-            paused = True
-            for pt in pts:
-                pygame.draw.circle(fake_screen, (0, 255, 0), tp(pt), 10)
+    #     if tf:
+    #         paused = True
+    #         for pt in pts:
+    #             pygame.draw.circle(fake_screen, (0, 255, 0), tp(pt), 10)
                 
-        for ln in inner_lines:
+    #     for ln in inner_lines:
             
-            dist = point_to_segment_distance(corner[1], ln[0], ln[1])
+    #         dist = point_to_segment_distance(corner[1], ln[0], ln[1])
             
-            if min_dist is None:
-                min_dist = dist
-            else:
-                min_dist = min(min_dist, dist)
+    #         if min_dist is None:
+    #             min_dist = dist
+    #         else:
+    #             min_dist = min(min_dist, dist)
                         
-    # trans_to_step(min_dist)
+    trans_to_step(min_dist)
     
     
-    center_Dis = get_distance(points[0], (0,0))
+    # center_Dis = get_distance(points[0], (0,0))
     
-    GAME_FONT.render_to(fake_screen, (10, 160), f"CENTER DIS: {center_Dis}", (255, 0, 0) if center_Dis > r_turning_space else (0, 255, 0))
+    # GAME_FONT.render_to(fake_screen, (10, 160), f"CENTER DIS: {center_Dis}", (255, 0, 0) if center_Dis > r_turning_space else (0, 255, 0))
     
     # if center_Dis <= r_turning_space:
     #     paused = True
@@ -151,8 +157,9 @@ while running:
     GAME_FONT.render_to(fake_screen, (10, 40), f"FPS: {clock.get_fps()}", (0, 0, 0))
     GAME_FONT.render_to(fake_screen, (10, 70), f"POINTS: {len(points)}", (0, 0, 0))
     GAME_FONT.render_to(fake_screen, (10, 100), f"CUR_STEP: {cur_step}", (0, 0, 0))
-    GAME_FONT.render_to(fake_screen, (10, 130), f"DIST: {min_dist}", (0, 0, 0))
-    
+    GAME_FONT.render_to(fake_screen, (10, 130), f"CUR MAX SPED: {min_dist}", (0, 0, 0))
+    GAME_FONT.render_to(fake_screen, (10, 160), f"MAX SPED: {_max_sped}", (0, 0, 0))
+
     
 
     screen.blit(pygame.transform.smoothscale(fake_screen, screen.get_size()), (0, 0))
