@@ -30,7 +30,7 @@ def get_loc_row_name(ri):
 df_loc = pd.read_csv(csv_file_loc, header=None)
 df_transposed_loc = df_loc.transpose()
 
-df_transposed_loc.columns = [f"{i}s" for i in range(df_transposed_loc.shape[1])]
+df_transposed_loc.columns = [f"{i - 100}s" for i in range(df_transposed_loc.shape[1])]
 
 df_transposed_loc.index = [get_loc_row_name(i) for i in range(df_transposed_loc.shape[0])]
 
@@ -42,7 +42,7 @@ df_transposed_spd.index = [get_spd_row_name(i) for i in range(df_transposed_spd.
 
 
 
-xlsx_file = f'result1.xlsx'
+xlsx_file = f'result4.xlsx'
 
 with pd.ExcelWriter(xlsx_file, engine='openpyxl') as writer:
     df_transposed_loc.head(448).to_excel(writer, sheet_name='位置')
