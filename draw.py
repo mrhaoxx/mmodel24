@@ -5,8 +5,8 @@ from utils import point_to_segment_distance, get_distance
 
 r_turning_space = 450
 
-lo = loong(pitch=45.03362, r_turning_space=0, dense=0.001, nodenum=100)
-lo2 = loong(pitch=45.03362, r_turning_space=0, nodenum=100)
+lo = loong(pitch=45.0338, r_turning_space=0, dense=0.001, nodenum=100)
+lo2 = loong(pitch=45.0338, r_turning_space=0, nodenum=100)
 
 import pygame
 pygame.init()

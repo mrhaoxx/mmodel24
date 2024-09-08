@@ -12,7 +12,7 @@ time = 0
 
 min_step = 1e-7
 
-max_step = 1e-2
+max_step = 1e-1
 
 cur_step = max_step
 
@@ -52,19 +52,26 @@ while True:
         tf, pts = check_collision(corner, inner_lines)
         
         if tf:
+            print()
             print(time)
             exit(0)
-            
+        
         for ln in inner_lines:
-            dist = point_to_segment_distance(corner[1], ln[0], ln[1])
+            dists = []
+
+            for cr in corner:
+                dists.append(point_to_segment_distance(cr, ln[0], ln[1]))
             
+            dist = min(dists)
+
             if min_dist is None:
                 min_dist = dist
             else:
                 min_dist = min(min_dist, dist)
-                        
+                
     trans_to_step(min_dist)
     
     time += cur_step
 
+    print(f"+{time:15.6f}s {cur_step:15.9f} {min_dist:15.9f}", end="\r")
 
