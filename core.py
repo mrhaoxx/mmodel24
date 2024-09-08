@@ -109,18 +109,26 @@ class loong:
         theta = root_scalar(self.eq_head_point, bracket=[self.points_theta[self.cur_point_idx], self.points_theta[self.cur_point_idx+1]], args=(r_length,))
         return self.curved(theta.root), theta.root
 
-    def get_looong(self, distance_from_starting_point, cutting = None):
+    def get_looong(self, distance_from_starting_point, cutting = None, return_theta = False):
 
         head_point, theta1 = self.get_head_point(distance_from_starting_point)
             
             
         points_result = []
         
+        if return_theta:
+            theta_result = []
+        
         sec_point_theta = theta1
         sec_point = head_point
         
         for i in range(self.nodenum + 1):
+            
             points_result.append(sec_point)
+            
+            if return_theta:
+                theta_result.append(sec_point_theta)
+  
             if cutting is not None:
                 if sec_point_theta - theta1 > cutting:
                     break
@@ -129,6 +137,9 @@ class loong:
                 pass
             else:
                 sec_point_theta, sec_point = self.get_point_chain_next_sim(sec_point_theta, sec_point, self.board_length_head if i == 0 else self.board_length)
+        
+        if return_theta:
+            return points_result, theta_result
         
         return points_result
     
@@ -325,3 +336,5 @@ def check_collision(corner, lines):
             return True, [p1 if w else p2]
         
     return False, []
+
+

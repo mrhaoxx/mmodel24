@@ -179,9 +179,9 @@ while running:
     center_Dis = get_distance(points[0], (0,0))
     
     
-    if center_Dis <= r_turning_space:
-        # paused = True
-        print("Center Intersect ", time)
+    # if center_Dis <= r_turning_space:
+    #     paused = True
+    #     print("Center Intersect ", time)
 
 
     GAME_FONT.render_to(fake_screen, (10, 10), f"TIME: {time}", (0, 0, 0))
