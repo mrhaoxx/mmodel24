@@ -5,12 +5,10 @@ from core import loong, check_collision
 import math
 
 
-def check_pitch(pitch):
-    l = loong(pitch=pitch, r_turning_space=0, dense=0.001)
+def check_pitch(pitch, time = 0):
+    l = loong(pitch=pitch, r_turning_space=0)
 
     speed = 100
-
-    time = 0
 
     min_step = 1e-6
 
@@ -85,14 +83,14 @@ def check_pitch(pitch):
         print(f"Pitch {pitch:15.6f} Time {time:15.6f} Min Dist {min_dist:15.6f} Center Dis {center_Dis:15.6f} Step {cur_step:15.6f}", end="\r")
 
     
-min_pitch = 40
+min_pitch = 44
 
-max_pitch = 55
+max_pitch = 50
 
 while max_pitch - min_pitch > 1e-8:
     pitch = (min_pitch + max_pitch) / 2
 
-    if check_pitch(pitch):
+    if check_pitch(pitch, 200):
         max_pitch = pitch
     else:
         min_pitch = pitch
