@@ -2,9 +2,11 @@ from core import loong, get_speed, check_collision
 import math
 
 from utils import point_to_segment_distance, get_distance
-lo = loong(pitch=170, r_turning_space=450, dense=0.001, nodenum=100)
 
-lo2 = loong(pitch=170, r_turning_space=450, nodenum=100)
+r_turning_space = 450
+
+lo = loong(pitch=45.03362, r_turning_space=0, dense=0.001, nodenum=100)
+lo2 = loong(pitch=45.03362, r_turning_space=0, nodenum=100)
 
 import pygame
 pygame.init()
@@ -53,16 +55,16 @@ speed = 100
 
 time = 0
 
-time = (lo.total_length - lo.curved_distance(lo.intersect_theta_in)) / speed
+# time = (lo.total_length - lo.curved_distance(lo.intersect_theta_in)) / speed
 
-min_step = 1e-7
+min_step = 1e-5
 
 max_step = 1e-1
 
 cur_step = max_step
 
 max_speed = 160.5
-max_dist = 100
+max_dist = 10
 
 _max_sped = 0
 _min_dist = None
@@ -88,6 +90,16 @@ def trans_to_step_dist(dist):
     
     cur_step = min_step + (max_step - min_step) * (dist / max_dist)
 
+
+point_turning_space = []
+theta = 0
+while theta <= math.pi * 2:
+    x = r_turning_space * math.cos(theta)
+    y = r_turning_space * math.sin(theta)
+    point_turning_space.append((x, y))
+    theta += 0.01
+    
+    
 while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
@@ -103,11 +115,14 @@ while running:
     
     # for pts in lo.points:
     #     pygame.draw.circle(fake_screen, (0, 0, 0), tp(pts), 1)
-    
+        
+    for pts in point_turning_space:
+        pygame.draw.circle(fake_screen, (255, 0, 0), tp(pts), 2)
+        
     pygame.draw.line(fake_screen, (0, 0, 255), (center[0] - 1000, center[1]), (center[0] + 1000, center[1]), 1)
     pygame.draw.line(fake_screen, (0, 0, 255), (center[0], center[1] - 1000), (center[0], center[1] + 1000), 1)
 
-    points = lo.get_looong(speed * time)
+    points = lo.get_looong(speed * time, cutting=3 * math.pi)
     
     speeds = get_speed(lo2, time, speed)
     
@@ -160,8 +175,11 @@ while running:
                 pygame.draw.circle(fake_screen, (0, 255, 0), tp(pt), 10)
                 
         for ln in inner_lines:
+            dists = []
+            for cr in corner:
+                dists.append(point_to_segment_distance(cr, ln[0], ln[1]))
             
-            dist = point_to_segment_distance(corner[1], ln[0], ln[1])
+            dist = min(dists)
             
             if min_dist is None:
                 min_dist = dist
@@ -179,9 +197,9 @@ while running:
     center_Dis = get_distance(points[0], (0,0))
     
     
-    # if center_Dis <= r_turning_space:
-    #     paused = True
-    #     print("Center Intersect ", time)
+    if center_Dis <= r_turning_space:
+        paused = True
+        print("Center Intersect ", time)
 
 
     GAME_FONT.render_to(fake_screen, (10, 10), f"TIME: {time}", (0, 0, 0))

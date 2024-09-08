@@ -10,9 +10,9 @@ speed = 100
 
 time = 0
 
-min_step = 1e-6
+min_step = 1e-7
 
-max_step = 1e-1
+max_step = 1e-2
 
 cur_step = max_step
 

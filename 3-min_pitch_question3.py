@@ -6,7 +6,7 @@ import math
 
 
 def check_pitch(pitch):
-    l = loong(pitch=pitch, r_turning_space=0)
+    l = loong(pitch=pitch, r_turning_space=0, dense=0.001)
 
     speed = 100
 
@@ -23,11 +23,9 @@ def check_pitch(pitch):
     r_turning_space = 450
 
     def trans_to_step(dist):
-        global cur_step
         
         dist = min(max_dist, dist)
-        
-        cur_step = min_step + (max_step - min_step) * (dist / max_dist)
+        return min_step + (max_step - min_step) * (dist / max_dist)
 
     while True:
         
@@ -42,7 +40,7 @@ def check_pitch(pitch):
             
             pts = l.get_board_points(this_pt, next_pt)
             
-            if i > 4:
+            if i > 5:
                 inner_lines.append((pts[1], pts[2]))
                 
             if i <= 4:
@@ -56,28 +54,37 @@ def check_pitch(pitch):
             tf, pts = check_collision(corner, inner_lines)
             
             if tf:
+                print()
                 print(f"Pitch {pitch} Collision {time}")
                 return False
                 
             for ln in inner_lines:
-                dist = point_to_segment_distance(corner[1], ln[0], ln[1])
+                dists = []
+
+                for cr in corner:
+                    dists.append(point_to_segment_distance(cr, ln[0], ln[1]))
                 
+                dist = min(dists)
+
                 if min_dist is None:
                     min_dist = dist
                 else:
                     min_dist = min(min_dist, dist)
                             
-        trans_to_step(min_dist)
+        cur_step = trans_to_step(min_dist)
         
         center_Dis = get_distance(points[0], (0,0))
             
         if center_Dis <= r_turning_space:
+            print()
             print(f"Pitch {pitch} Center Intersect {time}")
             return True
 
         time += cur_step
+        
+        print(f"Pitch {pitch:15.6f} Time {time:15.6f} Min Dist {min_dist:15.6f} Center Dis {center_Dis:15.6f} Step {cur_step:15.6f}", end="\r")
 
-
+    
 min_pitch = 40
 
 max_pitch = 55
@@ -92,5 +99,5 @@ while max_pitch - min_pitch > 1e-8:
         
     print(f"max {max_pitch} min {min_pitch} delta {max_pitch - min_pitch}")
 
-print(f"Min Pitch: {pitch}")
+print(f"Min Pitch: {max_pitch}")
 
