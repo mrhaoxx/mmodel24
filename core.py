@@ -51,6 +51,21 @@ class loong:
         else:
             return self.get_point_negR(-theta * (self.o_beta / self.intersect_theta_out) + self.intersect_theta_out  + (math.pi - self.o_beta) / 2)
 
+    def print_curve(self):
+        print("o_r", self.o_r)
+        print("theta >=", self.intersect_theta_in)
+        
+        print("b", self.b)
+        print("k1", (self.o_beta / self.intersect_theta_in))
+        print("k2", (self.o_beta / self.intersect_theta_out))
+        
+        print("c1", self.intersect_theta_in +  math.pi + (math.pi - self.o_beta) / 2)
+        print("c2", self.intersect_theta_out  + (math.pi - self.o_beta) / 2)
+        
+        print("o_point_1", self.o_point_1)
+        print("o_point_2", self.o_point_2)
+        
+        print(math.atan2(self.o_point_1[1] - self.o_point_2[1], self.o_point_1[0] - self.o_point_2[0]) + math.pi)
 
     def get_point_distance_in(self, theta):
         return self.c_bsquared2 * (theta * math.sqrt(1 + theta * theta) + math.log(theta + math.sqrt(1 + theta * theta))) - self.c_sp_in
