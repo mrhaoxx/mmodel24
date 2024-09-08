@@ -143,7 +143,7 @@ class loong:
         
         return points_result
     
-    def __init__(self, pitch = 170, theta_max = 32 * math.pi, nodenum = 223, r_turning_space = 450, dense = 0.001) -> None:
+    def __init__(self, pitch = 170, theta_max = 32 * math.pi, nodenum = 223, r_turning_space = 450, dense = 0.0001) -> None:
         
         self.a = 0
         self.b = pitch / (2 * math.pi)
