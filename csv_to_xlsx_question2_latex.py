@@ -43,4 +43,4 @@ selection = [0,1, 51, 101, 151, 201, 223]
 
 selected_rows_spd = df_cb.iloc[selection]
 
-selected_rows_spd.to_csv('result2_latex.csv')
+selected_rows_spd.to_csv('result2_latex.csv', float_format='%.6f')

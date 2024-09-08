@@ -50,5 +50,5 @@ selection = [0,1, 51, 101, 151, 201, 223]
 selected_rows = selected_columns.iloc[[(2 * selection[i//2] if i % 2 == 0 else 2 * selection[i//2] + 1)  for i in range(len(selection) * 2)]]
 selected_rows_spd = selected_columns_spd.iloc[selection]
 
-selected_rows.to_csv('result1_latex_loc.csv')
-selected_rows_spd.to_csv('result1_latex_spd.csv')
+selected_rows.to_csv('result1_latex_loc.csv', float_format='%.6f')
+selected_rows_spd.to_csv('result1_latex_spd.csv', float_format='%.6f')

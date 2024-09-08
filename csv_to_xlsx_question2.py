@@ -39,4 +39,4 @@ df_cb.index = [get_row_name(i) for i in range(df_transposed_spd.shape[0])]
 xlsx_file = f'result2.xlsx'
 
 with pd.ExcelWriter(xlsx_file, engine='openpyxl') as writer:
-    df_cb.head(224).to_excel(writer, sheet_name='Sheet1')
+    df_cb.head(224).to_excel(writer, sheet_name='Sheet1', float_format='%.6f')

@@ -45,5 +45,5 @@ df_transposed_spd.index = [get_spd_row_name(i) for i in range(df_transposed_spd.
 xlsx_file = f'result4.xlsx'
 
 with pd.ExcelWriter(xlsx_file, engine='openpyxl') as writer:
-    df_transposed_loc.head(448).to_excel(writer, sheet_name='位置')
-    df_transposed_spd.head(224).to_excel(writer, sheet_name='速度')
+    df_transposed_loc.head(448).to_excel(writer, sheet_name='位置', float_format='%.6f')
+    df_transposed_spd.head(224).to_excel(writer, sheet_name='速度', float_format='%.6f')
