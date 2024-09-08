@@ -4,7 +4,9 @@ from core import loong, get_speed
 
 from speed_formula import compute_v_next
 
-time = 412.47383774746515
+import sys
+
+time = float(sys.argv[1])
 
 l = loong(pitch=55, r_turning_space=0)
 

@@ -2,7 +2,9 @@ from utils import get_distance
 
 from core import loong, get_speed
 
-time = 412.47383774746515
+import sys
+
+time = float(sys.argv[1])
 speed = 100
 
 l = loong(pitch=55, r_turning_space=0)

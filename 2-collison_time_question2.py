@@ -2,7 +2,7 @@ from utils import point_to_segment_distance
 
 from core import loong, check_collision
 
-import math
+import math,sys
 
 l = loong(pitch=55, r_turning_space=0)
 
@@ -52,7 +52,7 @@ while True:
         tf, pts = check_collision(corner, inner_lines)
         
         if tf:
-            print()
+            print(file=sys.stderr)
             print(time)
             exit(0)
         
@@ -73,5 +73,5 @@ while True:
     
     time += cur_step
 
-    print(f"+{time:15.6f}s {cur_step:15.9f} {min_dist:15.9f}", end="\r")
+    print(f"+{time:15.6f}s {cur_step:15.9f} {min_dist:15.9f}", end="\r", file=sys.stderr)
 
